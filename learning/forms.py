@@ -3,7 +3,35 @@ from django import forms
 from .models import Submission
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        single_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_clean(item, initial) for item in data]
+        return [single_clean(data, initial)] if data else []
+
+
 class SubmissionForm(forms.ModelForm):
+    extra_files = MultipleFileField(
+        label="Файли, скріни або відео",
+        required=False,
+        widget=MultipleFileInput(attrs={"multiple": True}),
+    )
+    extra_links = forms.CharField(
+        label="Посилання на відео, скріни або матеріали",
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 4,
+                "placeholder": "Кожне посилання з нового рядка: YouTube, Google Drive, GitHub, Figma тощо.",
+            }
+        ),
+    )
+
     class Meta:
         model = Submission
         fields = ["answer", "file"]

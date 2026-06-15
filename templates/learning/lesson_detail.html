@@ -22,11 +22,29 @@
       <section>
         <h2>Матеріали</h2>
         {% for material in lesson.materials.all %}
-          <a class="side-item" href="{% if material.file %}{{ material.file.url }}{% else %}{{ material.external_url }}{% endif %}" target="_blank" rel="noreferrer">
+          <div class="side-item material-item">
             <strong>{{ material.title }}</strong>
             {% if material.description %}<small>{{ material.description }}</small>{% endif %}
-            <em>Відкрити файл</em>
-          </a>
+            {% if material.file %}
+              <a class="file-link" href="{{ material.file.url }}" target="_blank" rel="noreferrer">Основний файл</a>
+            {% endif %}
+            {% if material.external_url %}
+              <a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Основне посилання</a>
+            {% endif %}
+            {% for attachment in material.attachments.all %}
+              {% if attachment.file %}
+                <a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title }}</a>
+              {% endif %}
+              {% if attachment.external_url %}
+                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title }}</a>
+              {% endif %}
+              {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
+            {% empty %}
+              {% if not material.file and not material.external_url %}
+                <small>Вкладення ще не додані.</small>
+              {% endif %}
+            {% endfor %}
+          </div>
         {% empty %}
           <p class="muted">Матеріали ще не додані.</p>
         {% endfor %}
@@ -46,6 +64,9 @@
                 {% if submission.teacher_comment %}<small>{{ submission.teacher_comment }}</small>{% endif %}
               {% else %}
                 <b class="pending-pill">Очікує перевірки</b>
+              {% endif %}
+              {% if submission.attachments.all %}
+                <small>Вкладень: {{ submission.attachments.count }}</small>
               {% endif %}
             {% endif %}
             <a class="small-action" href="{% url 'submit_assignment' assignment.id %}">

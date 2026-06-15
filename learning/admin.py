@@ -9,9 +9,11 @@ from .models import (
     Lesson,
     LessonProgress,
     Material,
+    MaterialAttachment,
     Module,
     Profile,
     Submission,
+    SubmissionAttachment,
 )
 
 
@@ -68,6 +70,12 @@ class MaterialInline(admin.TabularInline):
     extra = 1
 
 
+class MaterialAttachmentInline(admin.TabularInline):
+    model = MaterialAttachment
+    extra = 1
+    fields = ("title", "file", "external_url", "note", "order")
+
+
 class AssignmentInline(admin.TabularInline):
     model = Assignment
     extra = 1
@@ -85,6 +93,7 @@ class LessonAdmin(admin.ModelAdmin):
 class MaterialAdmin(admin.ModelAdmin):
     list_display = ("title", "lesson", "external_url")
     search_fields = ("title", "description")
+    inlines = [MaterialAttachmentInline]
 
 
 @admin.register(Enrollment)
@@ -101,11 +110,19 @@ class AssignmentAdmin(admin.ModelAdmin):
     search_fields = ("title", "task")
 
 
+class SubmissionAttachmentInline(admin.TabularInline):
+    model = SubmissionAttachment
+    extra = 0
+    fields = ("title", "file", "external_url", "note", "created_at")
+    readonly_fields = ("created_at",)
+
+
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ("assignment", "student", "submitted_at", "points")
     list_filter = ("assignment__lesson__module__course",)
     search_fields = ("student__username", "assignment__title", "answer", "teacher_comment")
+    inlines = [SubmissionAttachmentInline]
 
 
 @admin.register(LessonProgress)

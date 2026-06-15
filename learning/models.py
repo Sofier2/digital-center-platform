@@ -105,6 +105,23 @@ class Material(models.Model):
         return self.title
 
 
+class MaterialAttachment(models.Model):
+    material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name="attachments", verbose_name="матеріал")
+    title = models.CharField("назва", max_length=180)
+    file = models.FileField("файл або скрін", upload_to="materials/attachments/", blank=True)
+    external_url = models.URLField("відео або посилання", blank=True)
+    note = models.CharField("пояснення", max_length=220, blank=True)
+    order = models.PositiveIntegerField("порядок", default=1)
+
+    class Meta:
+        verbose_name = "вкладення матеріалу"
+        verbose_name_plural = "вкладення матеріалів"
+        ordering = ["material", "order", "title"]
+
+    def __str__(self):
+        return self.title
+
+
 class Enrollment(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="enrollments", verbose_name="учень")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollments", verbose_name="курс")
@@ -153,6 +170,23 @@ class Submission(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.assignment}"
+
+
+class SubmissionAttachment(models.Model):
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="attachments", verbose_name="здана робота")
+    title = models.CharField("назва", max_length=180, blank=True)
+    file = models.FileField("файл або скрін", upload_to="submissions/attachments/", blank=True)
+    external_url = models.URLField("відео або посилання", blank=True)
+    note = models.CharField("пояснення", max_length=220, blank=True)
+    created_at = models.DateTimeField("додано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "вкладення роботи"
+        verbose_name_plural = "вкладення робіт"
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return self.title or self.external_url or self.file.name
 
 
 class LessonProgress(models.Model):

@@ -17,6 +17,20 @@
         {% if submission.file %}
           <a class="file-link" href="{{ submission.file.url }}" target="_blank" rel="noreferrer">Відкрити файл роботи</a>
         {% endif %}
+        {% if submission.attachments.all %}
+          <div class="attachment-list">
+            <strong>Додаткові вкладення</strong>
+            {% for attachment in submission.attachments.all %}
+              {% if attachment.file %}
+                <a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Файл" }}</a>
+              {% endif %}
+              {% if attachment.external_url %}
+                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
+              {% endif %}
+              {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
     </article>
 

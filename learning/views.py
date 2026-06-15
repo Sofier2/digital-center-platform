@@ -7,7 +7,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ReviewSubmissionForm, SubmissionForm
-from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, Submission
+from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, Submission, SubmissionAttachment
 
 
 def is_platform_manager(user):
@@ -64,7 +64,7 @@ def course_detail(request, pk):
 @login_required
 def lesson_detail(request, pk):
     lesson = get_object_or_404(
-        Lesson.objects.select_related("module", "module__course").prefetch_related("materials", "assignments"),
+        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "assignments"),
         pk=pk,
         is_available=True,
     )
@@ -73,7 +73,7 @@ def lesson_detail(request, pk):
         return redirect("dashboard")
     submissions = {
         item.assignment_id: item
-        for item in Submission.objects.filter(student=request.user, assignment__lesson=lesson)
+        for item in Submission.objects.prefetch_related("attachments").filter(student=request.user, assignment__lesson=lesson)
     }
     return render(request, "learning/lesson_detail.html", {"lesson": lesson, "submissions": submissions})
 
@@ -98,6 +98,20 @@ def submit_assignment(request, pk):
             result.points = None
             result.teacher_comment = ""
             result.save()
+            for uploaded_file in request.FILES.getlist("extra_files"):
+                SubmissionAttachment.objects.create(
+                    submission=result,
+                    title=uploaded_file.name,
+                    file=uploaded_file,
+                )
+            for raw_link in form.cleaned_data.get("extra_links", "").splitlines():
+                link = raw_link.strip()
+                if link:
+                    SubmissionAttachment.objects.create(
+                        submission=result,
+                        title="Посилання",
+                        external_url=link,
+                    )
             messages.success(request, "Роботу збережено. Викладач побачить її в кабінеті перевірки.")
             return redirect("lesson_detail", pk=assignment.lesson_id)
     else:
@@ -113,7 +127,7 @@ def submit_assignment(request, pk):
 @login_required
 @user_passes_test(is_platform_manager)
 def platform_admin_dashboard(request):
-    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson").order_by("-submitted_at")[:8]
+    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson").prefetch_related("attachments").order_by("-submitted_at")[:8]
     context = {
         "courses_count": Course.objects.count(),
         "students_count": User.objects.filter(enrollments__isnull=False).distinct().count(),
@@ -163,7 +177,7 @@ def platform_admin_students(request):
 @user_passes_test(is_platform_manager)
 def platform_admin_submissions(request):
     status = request.GET.get("status", "pending")
-    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course")
+    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course").prefetch_related("attachments")
     if status == "checked":
         submissions = submissions.filter(points__isnull=False)
     elif status == "all":
@@ -177,7 +191,7 @@ def platform_admin_submissions(request):
 @user_passes_test(is_platform_manager)
 def review_submission(request, pk):
     submission = get_object_or_404(
-        Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course"),
+        Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course").prefetch_related("attachments"),
         pk=pk,
     )
     if request.method == "POST":

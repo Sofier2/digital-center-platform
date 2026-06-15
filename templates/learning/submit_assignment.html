@@ -26,11 +26,32 @@
         {{ form.answer }}
       </label>
       <label>
-        Файл роботи
+        Один основний файл
         {{ form.file }}
+      </label>
+      <label>
+        Додаткові файли, скріни або відео
+        {{ form.extra_files }}
+      </label>
+      <label>
+        Посилання на відео, скріни або матеріали
+        {{ form.extra_links }}
       </label>
       {% if submission.file %}
         <a class="file-link" href="{{ submission.file.url }}" target="_blank" rel="noreferrer">Переглянути поточний файл</a>
+      {% endif %}
+      {% if submission and submission.attachments.all %}
+        <div class="attachment-list">
+          <strong>Уже додані вкладення</strong>
+          {% for attachment in submission.attachments.all %}
+            {% if attachment.file %}
+              <a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Файл" }}</a>
+            {% endif %}
+            {% if attachment.external_url %}
+              <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
       {% endif %}
       <button class="primary-btn" type="submit">Зберегти роботу</button>
     </form>
