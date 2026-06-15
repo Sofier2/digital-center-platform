@@ -86,7 +86,6 @@ def course_detail(request, pk):
         is_published=True,
     )
     if not user_has_course_access(request.user, course):
-        messages.error(request, "Цей курс ще не призначений для твого кабінету.")
         return redirect("dashboard")
     progress = {
         item.lesson_id: item.is_done
@@ -103,7 +102,6 @@ def lesson_detail(request, pk):
         is_available=True,
     )
     if not user_has_course_access(request.user, lesson.module.course):
-        messages.error(request, "Цей урок недоступний для твого кабінету.")
         return redirect("dashboard")
     submissions = {
         item.assignment_id: item
@@ -119,7 +117,6 @@ def submit_assignment(request, pk):
         pk=pk,
     )
     if not user_has_course_access(request.user, assignment.lesson.module.course):
-        messages.error(request, "Це завдання недоступне для твого кабінету.")
         return redirect("dashboard")
 
     submission = Submission.objects.filter(assignment=assignment, student=request.user).first()
