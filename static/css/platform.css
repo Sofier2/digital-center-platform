@@ -921,3 +921,256 @@ main {
     flex-direction: column;
   }
 }
+
+/* Stable final UI pass. Keeps the platform looking like an app, not raw admin pages. */
+:root {
+  --app-bg: #f7f8ff;
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-solid: #ffffff;
+  --border-strong: rgba(60, 45, 140, 0.13);
+  --text-strong: #17123d;
+  --text-soft: #6f6a8e;
+}
+
+body {
+  color: var(--text-strong);
+  background:
+    linear-gradient(rgba(96, 77, 180, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 77, 180, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 14% 0%, rgba(112, 55, 242, 0.12), transparent 30%),
+    radial-gradient(circle at 94% 12%, rgba(36, 88, 242, 0.1), transparent 30%),
+    var(--app-bg);
+  background-size: 48px 48px, 48px 48px, auto, auto, auto;
+}
+
+.app-header {
+  min-height: 76px;
+  padding: 12px clamp(18px, 4vw, 48px);
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--border-strong);
+  box-shadow: 0 12px 36px rgba(31, 18, 92, 0.07);
+}
+
+.brand {
+  max-width: 460px;
+}
+
+.brand-mark {
+  flex-basis: 44px;
+  width: 44px;
+  height: 44px;
+  max-width: 44px;
+  max-height: 44px;
+  padding: 7px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(83, 46, 214, 0.16);
+}
+
+.brand-mark img {
+  width: 30px !important;
+  height: 30px !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
+  transform: none;
+}
+
+.brand strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.brand small {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.top-actions a,
+.top-actions button {
+  min-height: 38px;
+  padding: 0 14px;
+  background: #ffffff;
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 20px rgba(31, 18, 92, 0.05);
+  font-size: 14px;
+}
+
+main {
+  width: min(1120px, calc(100% - 32px));
+  padding-top: 24px;
+}
+
+.page-hero,
+.login-shell,
+.course-card,
+.module-card,
+.empty-state,
+.lesson-main,
+.lesson-side,
+.login-card,
+.admin-panel,
+.student-admin-card,
+.upload-card,
+.submission-box,
+.result-card {
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 18px 52px rgba(31, 18, 92, 0.1);
+  backdrop-filter: blur(14px);
+}
+
+.page-hero {
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.24), transparent 18%),
+    linear-gradient(135deg, #150846 0%, #5524d9 52%, #1959ed 100%);
+}
+
+.page-hero.admin-hero {
+  min-height: 280px;
+  padding: clamp(30px, 4.2vw, 46px);
+  border-radius: 26px;
+}
+
+.page-hero h1,
+.login-copy h1 {
+  max-width: 720px;
+  font-size: clamp(34px, 4.6vw, 58px);
+  line-height: 1.04;
+  text-shadow: 0 12px 28px rgba(7, 4, 36, 0.28);
+}
+
+.page-hero p,
+.login-copy p {
+  max-width: 650px;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.admin-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 22px;
+}
+
+.admin-stats a {
+  display: grid;
+  align-content: center;
+  min-height: 112px;
+  padding: 20px;
+  color: var(--text-strong);
+  background: var(--panel-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  box-shadow: 0 14px 36px rgba(31, 18, 92, 0.08);
+}
+
+.admin-stats strong {
+  color: #6035ef;
+  font-size: 38px;
+}
+
+.admin-stats span {
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+.admin-panel {
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.section-title h2 {
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.table-row {
+  min-height: 64px;
+  background: #ffffff;
+  border-radius: 14px;
+}
+
+.course-grid {
+  gap: 16px;
+}
+
+.course-card {
+  min-height: 360px;
+  border-radius: 22px;
+}
+
+.module-card,
+.student-admin-card,
+.upload-card,
+.lesson-main,
+.lesson-side {
+  border-radius: 22px;
+}
+
+.primary-btn {
+  border-radius: 14px;
+}
+
+@media (max-width: 980px) {
+  .admin-stats,
+  .course-grid,
+  .result-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .app-header {
+    position: static;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .brand {
+    max-width: none;
+  }
+
+  .top-actions {
+    justify-content: stretch;
+  }
+
+  .top-actions a,
+  .top-actions button,
+  .top-actions form {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  main {
+    width: min(100% - 20px, 1120px);
+    padding-top: 18px;
+  }
+
+  .page-hero.admin-hero {
+    min-height: 220px;
+    padding: 26px 20px;
+  }
+
+  .page-hero h1,
+  .login-copy h1 {
+    font-size: 34px;
+  }
+
+  .admin-stats,
+  .course-grid,
+  .result-list {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
