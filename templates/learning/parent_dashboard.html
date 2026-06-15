@@ -1,0 +1,70 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Кабінет батьків{% endblock %}
+
+{% block content %}
+  <section class="page-hero parent-hero">
+    <span class="eyebrow">Кабінет батьків</span>
+    <h1>Прогрес дитини без зайвих питань</h1>
+    <p>Курси, домашні завдання, оцінки й коментарі викладача зібрані в одному місці.</p>
+  </section>
+
+  <section class="parent-grid">
+    {% for item in children_data %}
+      <article class="parent-child-card">
+        <div class="student-head">
+          <div>
+            <strong>{{ item.child.get_full_name|default:item.child.username }}</strong>
+            <small>{{ item.child.email|default:"email не вказано" }}</small>
+          </div>
+          <span>{{ item.lessons_done }}/{{ item.lessons_total }} уроків</span>
+        </div>
+
+        <div class="parent-stats">
+          <div><strong>{{ item.enrollments.count }}</strong><span>Активних курсів</span></div>
+          <div><strong>{{ item.pending_count }}</strong><span>Очікує перевірки</span></div>
+          <div><strong>{{ item.checked_count }}</strong><span>Оцінено</span></div>
+        </div>
+
+        <div class="parent-section">
+          <h2>Курси</h2>
+          <div class="parent-course-list">
+            {% for enrollment in item.enrollments %}
+              <a href="{{ enrollment.course.get_absolute_url }}">
+                <strong>{{ enrollment.course.title }}</strong>
+                <small>{{ enrollment.course.schedule }} · {{ enrollment.course.final_project }}</small>
+              </a>
+            {% empty %}
+              <p class="muted">Активних курсів поки немає.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="parent-section">
+          <h2>Останні домашні роботи</h2>
+          <div class="result-list parent-results">
+            {% for submission in item.submissions %}
+              <div class="result-card">
+                <strong>{{ submission.assignment.title }}</strong>
+                <span>{{ submission.assignment.lesson.module.course.title }}</span>
+                {% if submission.points != None %}
+                  <b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>
+                  {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+                {% else %}
+                  <em>Очікує перевірки</em>
+                {% endif %}
+              </div>
+            {% empty %}
+              <p class="muted">Зданих робіт ще немає.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Дітей ще не прив'язано</h2>
+        <p>У Django admin потрібно створити зв'язок між користувачем-батьком і користувачем-дитиною.</p>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

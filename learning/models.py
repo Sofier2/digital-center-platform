@@ -25,6 +25,21 @@ class Profile(models.Model):
         return self.user.get_full_name() or self.user.username
 
 
+class ParentChild(models.Model):
+    parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name="child_links", verbose_name="батьки")
+    child = models.ForeignKey(User, on_delete=models.CASCADE, related_name="parent_links", verbose_name="дитина")
+    note = models.CharField("примітка", max_length=160, blank=True)
+    created_at = models.DateTimeField("створено", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "зв'язок батьки-дитина"
+        verbose_name_plural = "зв'язки батьків і дітей"
+        unique_together = ["parent", "child"]
+
+    def __str__(self):
+        return f"{self.parent} -> {self.child}"
+
+
 class Course(models.Model):
     class Direction(models.TextChoices):
         ENGLISH = "english", "Англійська мова"

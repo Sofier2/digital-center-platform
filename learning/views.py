@@ -7,7 +7,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ReviewSubmissionForm, SubmissionForm
-from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, Submission, SubmissionAttachment
+from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, ParentChild, Submission, SubmissionAttachment
 
 
 def is_platform_manager(user):
@@ -16,6 +16,10 @@ def is_platform_manager(user):
     if user.is_staff:
         return True
     return getattr(getattr(user, "profile", None), "role", "") == "teacher"
+
+
+def is_parent(user):
+    return getattr(getattr(user, "profile", None), "role", "") == "parent"
 
 
 def user_has_course_access(user, course):
@@ -28,6 +32,8 @@ def user_has_course_access(user, course):
 def dashboard(request):
     if is_platform_manager(request.user):
         return redirect("platform_admin_dashboard")
+    if is_parent(request.user):
+        return redirect("parent_dashboard")
 
     enrollments = request.user.enrollments.select_related("course").filter(is_active=True)
     courses = Course.objects.filter(enrollments__student=request.user, enrollments__is_active=True, is_published=True).distinct()
@@ -42,6 +48,34 @@ def dashboard(request):
             "submissions": submissions,
         },
     )
+
+
+@login_required
+def parent_dashboard(request):
+    if not is_parent(request.user) and not request.user.is_staff:
+        return redirect("dashboard")
+
+    child_links = ParentChild.objects.filter(parent=request.user).select_related("child")
+    children_data = []
+    for link in child_links:
+        child = link.child
+        enrollments = child.enrollments.select_related("course").filter(is_active=True)
+        submissions = child.submissions.select_related("assignment", "assignment__lesson", "assignment__lesson__module__course").prefetch_related("attachments").order_by("-submitted_at")
+        lessons_total = Lesson.objects.filter(module__course__enrollments__student=child, module__course__enrollments__is_active=True).distinct().count()
+        lessons_done = LessonProgress.objects.filter(student=child, is_done=True, lesson__module__course__enrollments__student=child).distinct().count()
+        children_data.append(
+            {
+                "child": child,
+                "enrollments": enrollments,
+                "submissions": submissions[:6],
+                "pending_count": submissions.filter(points__isnull=True).count(),
+                "checked_count": submissions.filter(points__isnull=False).count(),
+                "lessons_total": lessons_total,
+                "lessons_done": lessons_done,
+            }
+        )
+
+    return render(request, "learning/parent_dashboard.html", {"children_data": children_data})
 
 
 @login_required

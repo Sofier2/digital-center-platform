@@ -11,6 +11,7 @@ from .models import (
     Material,
     MaterialAttachment,
     Module,
+    ParentChild,
     Profile,
     Submission,
     SubmissionAttachment,
@@ -24,12 +25,20 @@ class EnrollmentInline(admin.TabularInline):
     autocomplete_fields = ("course",)
 
 
+class ParentChildInline(admin.TabularInline):
+    model = ParentChild
+    fk_name = "parent"
+    extra = 1
+    fields = ("child", "note")
+    autocomplete_fields = ("child",)
+
+
 admin.site.unregister(User)
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    inlines = [EnrollmentInline]
+    inlines = [EnrollmentInline, ParentChildInline]
 
 
 @admin.register(Profile)
@@ -37,6 +46,13 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "role", "child_name", "parent_name", "phone")
     list_filter = ("role",)
     search_fields = ("user__username", "user__first_name", "user__last_name", "child_name", "parent_name", "phone")
+
+
+@admin.register(ParentChild)
+class ParentChildAdmin(admin.ModelAdmin):
+    list_display = ("parent", "child", "note", "created_at")
+    search_fields = ("parent__username", "parent__first_name", "parent__last_name", "child__username", "child__first_name", "child__last_name")
+    autocomplete_fields = ("parent", "child")
 
 
 class ModuleInline(admin.TabularInline):
