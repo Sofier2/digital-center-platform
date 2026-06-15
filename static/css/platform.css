@@ -946,6 +946,28 @@ main {
   margin: 4px 0 0;
 }
 
+.parent-schedule {
+  display: grid;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 12px 14px;
+  background: rgba(109, 53, 242, 0.08);
+  border: 1px solid rgba(109, 53, 242, 0.14);
+  border-radius: 14px;
+}
+
+.parent-schedule span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.parent-schedule strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
 .parent-stats strong {
   color: var(--violet);
   font-family: "Geologica", sans-serif;

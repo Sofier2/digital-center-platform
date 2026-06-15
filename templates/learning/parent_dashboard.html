@@ -36,11 +36,14 @@
                 <p>{{ enrollment.course.short_description }}</p>
                 <ul class="meta-list">
                   <li>{{ enrollment.course.age_range }}</li>
-                  <li>{{ enrollment.course.schedule }}</li>
                   {% if enrollment.course.level %}<li>{{ enrollment.course.level }}</li>{% endif %}
                   <li>{{ enrollment.course.price }}</li>
                   <li>{{ enrollment.course.final_project }}</li>
                 </ul>
+                <div class="parent-schedule">
+                  <span>Розклад</span>
+                  <strong>{{ enrollment.course.schedule }}</strong>
+                </div>
               </a>
             {% empty %}
               <p class="muted">Активних курсів поки немає.</p>
