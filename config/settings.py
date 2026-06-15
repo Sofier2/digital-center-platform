@@ -87,6 +87,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 STORAGES = {
     "default": {
