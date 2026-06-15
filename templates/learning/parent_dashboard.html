@@ -30,9 +30,17 @@
           <h2>Курси</h2>
           <div class="parent-course-list">
             {% for enrollment in item.enrollments %}
-              <a href="{{ enrollment.course.get_absolute_url }}">
+              <a class="parent-course-card" href="{{ enrollment.course.get_absolute_url }}">
+                <span>{{ enrollment.course.get_direction_display }}</span>
                 <strong>{{ enrollment.course.title }}</strong>
-                <small>{{ enrollment.course.schedule }} · {{ enrollment.course.final_project }}</small>
+                <p>{{ enrollment.course.short_description }}</p>
+                <ul class="meta-list">
+                  <li>{{ enrollment.course.age_range }}</li>
+                  <li>{{ enrollment.course.schedule }}</li>
+                  {% if enrollment.course.level %}<li>{{ enrollment.course.level }}</li>{% endif %}
+                  <li>{{ enrollment.course.price }}</li>
+                  <li>{{ enrollment.course.final_project }}</li>
+                </ul>
               </a>
             {% empty %}
               <p class="muted">Активних курсів поки немає.</p>

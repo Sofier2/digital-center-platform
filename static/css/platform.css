@@ -920,6 +920,32 @@ main {
   border-radius: 16px;
 }
 
+.parent-course-card {
+  align-content: start;
+  gap: 10px !important;
+}
+
+.parent-course-card > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.parent-course-card strong {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.parent-course-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.parent-course-card .meta-list {
+  margin: 4px 0 0;
+}
+
 .parent-stats strong {
   color: var(--violet);
   font-family: "Geologica", sans-serif;
