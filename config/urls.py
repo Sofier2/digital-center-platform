@@ -18,5 +18,7 @@ if settings.DEBUG:
 
 if not settings.DEBUG:
     urlpatterns = [
+        re_path(r"^static/css/(?P<path>.*)$", serve, {"document_root": settings.BASE_DIR / "static" / "css"}),
+        re_path(r"^static/img/(?P<path>.*)$", serve, {"document_root": settings.BASE_DIR / "static" / "img"}),
         re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT}),
     ] + urlpatterns
