@@ -141,6 +141,7 @@ class Submission(models.Model):
     answer = models.TextField("відповідь", blank=True)
     file = models.FileField("файл роботи", upload_to="submissions/", blank=True)
     submitted_at = models.DateTimeField("здано", auto_now_add=True)
+    updated_at = models.DateTimeField("оновлено", auto_now=True)
     points = models.PositiveIntegerField("бали", blank=True, null=True)
     teacher_comment = models.TextField("коментар викладача", blank=True)
 
@@ -148,6 +149,7 @@ class Submission(models.Model):
         verbose_name = "здана робота"
         verbose_name_plural = "здані роботи"
         ordering = ["-submitted_at"]
+        unique_together = ["assignment", "student"]
 
     def __str__(self):
         return f"{self.student} - {self.assignment}"

@@ -1,0 +1,36 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Панель платформи{% endblock %}
+
+{% block content %}
+  <section class="page-hero admin-hero">
+    <span class="eyebrow">Панель викладача</span>
+    <h1>Курси, учні й домашки без хаосу</h1>
+    <p>Тут видно навчання як систему: хто має доступ, хто здав роботу, що треба перевірити.</p>
+  </section>
+
+  <section class="admin-stats">
+    <a href="{% url 'platform_admin_courses' %}"><strong>{{ courses_count }}</strong><span>Курсів</span></a>
+    <a href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
+    <a href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
+    <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
+  </section>
+
+  <section class="admin-panel">
+    <div class="section-title">
+      <span class="eyebrow light">Останні роботи</span>
+      <h2>Що здали учні</h2>
+    </div>
+    <div class="table-list">
+      {% for submission in submissions %}
+        <a class="table-row" href="{% url 'review_submission' submission.id %}">
+          <span>{{ submission.student.get_full_name|default:submission.student.username }}</span>
+          <strong>{{ submission.assignment.title }}</strong>
+          {% if submission.points != None %}<b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>{% else %}<em>Перевірити</em>{% endif %}
+        </a>
+      {% empty %}
+        <p class="muted">Робіт ще немає.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,16 +1,37 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from datetime import date
 
-from .models import Course, Lesson
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import ReviewSubmissionForm, SubmissionForm
+from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, Submission
+
+
+def is_platform_manager(user):
+    if not user.is_authenticated:
+        return False
+    if user.is_staff:
+        return True
+    return getattr(getattr(user, "profile", None), "role", "") == "teacher"
+
+
+def user_has_course_access(user, course):
+    if is_platform_manager(user):
+        return True
+    return Enrollment.objects.filter(student=user, course=course, is_active=True).exists()
 
 
 @login_required
 def dashboard(request):
-    enrollments = request.user.enrollments.select_related("course").filter(is_active=True)
-    courses = Course.objects.filter(is_published=True)
+    if is_platform_manager(request.user):
+        return redirect("platform_admin_dashboard")
 
-    if enrollments.exists():
-        courses = Course.objects.filter(enrollments__student=request.user, enrollments__is_active=True).distinct()
+    enrollments = request.user.enrollments.select_related("course").filter(is_active=True)
+    courses = Course.objects.filter(enrollments__student=request.user, enrollments__is_active=True, is_published=True).distinct()
+    submissions = request.user.submissions.select_related("assignment", "assignment__lesson").order_by("-submitted_at")[:6]
 
     return render(
         request,
@@ -18,6 +39,7 @@ def dashboard(request):
         {
             "courses": courses,
             "enrollments": enrollments,
+            "submissions": submissions,
         },
     )
 
@@ -29,7 +51,14 @@ def course_detail(request, pk):
         pk=pk,
         is_published=True,
     )
-    return render(request, "learning/course_detail.html", {"course": course})
+    if not user_has_course_access(request.user, course):
+        messages.error(request, "Цей курс ще не призначений для твого кабінету.")
+        return redirect("dashboard")
+    progress = {
+        item.lesson_id: item.is_done
+        for item in LessonProgress.objects.filter(student=request.user, lesson__module__course=course)
+    }
+    return render(request, "learning/course_detail.html", {"course": course, "progress": progress})
 
 
 @login_required
@@ -39,4 +68,124 @@ def lesson_detail(request, pk):
         pk=pk,
         is_available=True,
     )
-    return render(request, "learning/lesson_detail.html", {"lesson": lesson})
+    if not user_has_course_access(request.user, lesson.module.course):
+        messages.error(request, "Цей урок недоступний для твого кабінету.")
+        return redirect("dashboard")
+    submissions = {
+        item.assignment_id: item
+        for item in Submission.objects.filter(student=request.user, assignment__lesson=lesson)
+    }
+    return render(request, "learning/lesson_detail.html", {"lesson": lesson, "submissions": submissions})
+
+
+@login_required
+def submit_assignment(request, pk):
+    assignment = get_object_or_404(
+        Assignment.objects.select_related("lesson", "lesson__module", "lesson__module__course"),
+        pk=pk,
+    )
+    if not user_has_course_access(request.user, assignment.lesson.module.course):
+        messages.error(request, "Це завдання недоступне для твого кабінету.")
+        return redirect("dashboard")
+
+    submission = Submission.objects.filter(assignment=assignment, student=request.user).first()
+    if request.method == "POST":
+        form = SubmissionForm(request.POST, request.FILES, instance=submission)
+        if form.is_valid():
+            result = form.save(commit=False)
+            result.assignment = assignment
+            result.student = request.user
+            result.points = None
+            result.teacher_comment = ""
+            result.save()
+            messages.success(request, "Роботу збережено. Викладач побачить її в кабінеті перевірки.")
+            return redirect("lesson_detail", pk=assignment.lesson_id)
+    else:
+        form = SubmissionForm(instance=submission)
+
+    return render(
+        request,
+        "learning/submit_assignment.html",
+        {"assignment": assignment, "form": form, "submission": submission},
+    )
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_dashboard(request):
+    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson").order_by("-submitted_at")[:8]
+    context = {
+        "courses_count": Course.objects.count(),
+        "students_count": User.objects.filter(enrollments__isnull=False).distinct().count(),
+        "pending_count": Submission.objects.filter(points__isnull=True).count(),
+        "checked_count": Submission.objects.filter(points__isnull=False).count(),
+        "submissions": submissions,
+    }
+    return render(request, "learning/platform_admin/dashboard.html", context)
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_courses(request):
+    courses = Course.objects.annotate(
+        students_total=Count("enrollments", filter=Q(enrollments__is_active=True), distinct=True),
+        lessons_total=Count("modules__lessons", distinct=True),
+    ).prefetch_related("modules")
+    return render(request, "learning/platform_admin/courses.html", {"courses": courses})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_students(request):
+    if request.method == "POST":
+        student = get_object_or_404(User, pk=request.POST.get("student_id"))
+        course = get_object_or_404(Course, pk=request.POST.get("course_id"))
+        action = request.POST.get("action")
+        enrollment, _ = Enrollment.objects.get_or_create(
+            student=student,
+            course=course,
+            defaults={"started_at": date.today(), "is_active": True},
+        )
+        enrollment.is_active = action != "remove"
+        enrollment.save()
+        if enrollment.is_active:
+            messages.success(request, f"Курс '{course.title}' призначено для {student.get_full_name() or student.username}.")
+        else:
+            messages.success(request, f"Доступ до курсу '{course.title}' знято.")
+        return redirect("platform_admin_students")
+
+    students = User.objects.filter(is_staff=False).prefetch_related("enrollments__course", "submissions").order_by("first_name", "last_name", "username")
+    all_courses = Course.objects.filter(is_published=True)
+    return render(request, "learning/platform_admin/students.html", {"students": students, "all_courses": all_courses})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_submissions(request):
+    status = request.GET.get("status", "pending")
+    submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course")
+    if status == "checked":
+        submissions = submissions.filter(points__isnull=False)
+    elif status == "all":
+        submissions = submissions.all()
+    else:
+        submissions = submissions.filter(points__isnull=True)
+    return render(request, "learning/platform_admin/submissions.html", {"submissions": submissions, "status": status})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def review_submission(request, pk):
+    submission = get_object_or_404(
+        Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        form = ReviewSubmissionForm(request.POST, instance=submission)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Оцінку й коментар збережено.")
+            return redirect("platform_admin_submissions")
+    else:
+        form = ReviewSubmissionForm(instance=submission)
+    return render(request, "learning/platform_admin/review_submission.html", {"submission": submission, "form": form})

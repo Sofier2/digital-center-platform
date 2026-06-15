@@ -1,0 +1,31 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Курси платформи{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">Курси</span>
+    <h1>Усі напрямки платформи</h1>
+    <p>Огляд курсів для викладача: кількість учнів, уроків і навчальні умови.</p>
+  </section>
+
+  <section class="course-grid admin-course-grid">
+    {% for course in courses %}
+      <article class="course-card">
+        <div class="course-top">
+          <span>{{ course.get_direction_display }}</span>
+          <strong>{{ course.students_total }} учнів</strong>
+        </div>
+        <h2>{{ course.title }}</h2>
+        <p>{{ course.short_description }}</p>
+        <ul class="meta-list">
+          <li>{{ course.age_range }}</li>
+          {% if course.level %}<li>{{ course.level }}</li>{% endif %}
+          <li>{{ course.schedule }}</li>
+          <li>{{ course.lessons_total }} уроків</li>
+        </ul>
+        <a class="primary-btn" href="{{ course.get_absolute_url }}">Переглянути як курс</a>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends "learning/base.html" %}
+{% load learning_extras %}
 
 {% block title %}{{ lesson.title }}{% endblock %}
 
@@ -24,6 +25,7 @@
           <a class="side-item" href="{% if material.file %}{{ material.file.url }}{% else %}{{ material.external_url }}{% endif %}" target="_blank" rel="noreferrer">
             <strong>{{ material.title }}</strong>
             {% if material.description %}<small>{{ material.description }}</small>{% endif %}
+            <em>Відкрити файл</em>
           </a>
         {% empty %}
           <p class="muted">Матеріали ще не додані.</p>
@@ -33,11 +35,24 @@
       <section>
         <h2>Домашні завдання</h2>
         {% for assignment in lesson.assignments.all %}
-          <div class="side-item">
+          {% with submission=submissions|dict_get:assignment.id %}
+          <div class="side-item homework-item">
             <strong>{{ assignment.title }}</strong>
             <small>{{ assignment.task|truncatechars:120 }}</small>
             {% if assignment.due_date %}<em>До {{ assignment.due_date }}</em>{% endif %}
+            {% if submission %}
+              {% if submission.points != None %}
+                <b class="grade-pill">{{ submission.points }}/{{ assignment.max_points }}</b>
+                {% if submission.teacher_comment %}<small>{{ submission.teacher_comment }}</small>{% endif %}
+              {% else %}
+                <b class="pending-pill">Очікує перевірки</b>
+              {% endif %}
+            {% endif %}
+            <a class="small-action" href="{% url 'submit_assignment' assignment.id %}">
+              {% if submission %}Оновити роботу{% else %}Здати роботу{% endif %}
+            </a>
           </div>
+          {% endwith %}
         {% empty %}
           <p class="muted">Домашніх завдань поки немає.</p>
         {% endfor %}

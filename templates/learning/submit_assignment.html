@@ -1,0 +1,38 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Здати роботу{% endblock %}
+
+{% block content %}
+  <section class="submit-layout">
+    <article class="lesson-main">
+      <a class="back-link" href="{{ assignment.lesson.get_absolute_url }}">Назад до уроку</a>
+      <span class="eyebrow light">{{ assignment.lesson.module.course.title }}</span>
+      <h1>{{ assignment.title }}</h1>
+      <p class="lead">{{ assignment.task }}</p>
+      {% if assignment.due_date %}<p class="deadline">Дедлайн: {{ assignment.due_date }}</p>{% endif %}
+      {% if submission and submission.points != None %}
+        <div class="checked-box">
+          <strong>Оцінка: {{ submission.points }}/{{ assignment.max_points }}</strong>
+          {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+        </div>
+      {% endif %}
+    </article>
+
+    <form class="upload-card" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <h2>{% if submission %}Оновити роботу{% else %}Завантажити роботу{% endif %}</h2>
+      <label>
+        Коментар або посилання
+        {{ form.answer }}
+      </label>
+      <label>
+        Файл роботи
+        {{ form.file }}
+      </label>
+      {% if submission.file %}
+        <a class="file-link" href="{{ submission.file.url }}" target="_blank" rel="noreferrer">Переглянути поточний файл</a>
+      {% endif %}
+      <button class="primary-btn" type="submit">Зберегти роботу</button>
+    </form>
+  </section>
+{% endblock %}

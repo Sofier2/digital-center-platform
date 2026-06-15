@@ -29,11 +29,31 @@
     {% empty %}
       <article class="empty-state">
         <h2>Курсів поки немає</h2>
-        <p>Додай курси, модулі й уроки через Django admin.</p>
-        {% if user.is_staff %}
-          <a class="primary-btn" href="{% url 'admin:index' %}">Перейти в адмінку</a>
-        {% endif %}
+        <p>Викладач ще не призначив курс у твій кабінет. Коли доступ відкриють, курс з'явиться тут.</p>
       </article>
     {% endfor %}
   </section>
+
+  {% if submissions %}
+    <section class="student-results">
+      <div class="section-title">
+        <span class="eyebrow light">Мої роботи</span>
+        <h2>Останні здачі та оцінки</h2>
+      </div>
+      <div class="result-list">
+        {% for submission in submissions %}
+          <article class="result-card">
+            <strong>{{ submission.assignment.title }}</strong>
+            <span>{{ submission.assignment.lesson.title }}</span>
+            {% if submission.points != None %}
+              <b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>
+              {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+            {% else %}
+              <em>Очікує перевірки</em>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
 {% endblock %}

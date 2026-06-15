@@ -1,4 +1,5 @@
 {% extends "learning/base.html" %}
+{% load learning_extras %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -29,7 +30,9 @@
             <a class="lesson-row" href="{{ lesson.get_absolute_url }}">
               <span>{{ lesson.order }}</span>
               <strong>{{ lesson.title }}</strong>
-              <small>{% if lesson.is_available %}Доступний{% else %}Скоро{% endif %}</small>
+              <small>
+                {% if progress|dict_get:lesson.id %}Пройдено{% elif lesson.is_available %}Доступний{% else %}Скоро{% endif %}
+              </small>
             </a>
           {% empty %}
             <p class="muted">Уроки ще не додані.</p>
