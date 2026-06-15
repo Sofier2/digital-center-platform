@@ -853,6 +853,35 @@ main {
   justify-content: flex-start;
 }
 
+.course-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+
+.course-card p {
+  flex: 1 1 auto;
+  min-height: 72px;
+  margin-bottom: 0;
+}
+
+.course-card .meta-list {
+  flex: 0 0 auto;
+  margin: 18px 0 16px;
+}
+
+.course-card .primary-btn {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: auto;
+  min-height: 54px;
+}
+
+.course-card .meta-list li {
+  white-space: nowrap;
+}
+
 @media (max-width: 920px) {
   .course-grid,
   .module-card,
