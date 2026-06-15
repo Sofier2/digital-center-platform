@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 
 from .models import (
     Assignment,
@@ -11,6 +13,21 @@ from .models import (
     Profile,
     Submission,
 )
+
+
+class EnrollmentInline(admin.TabularInline):
+    model = Enrollment
+    extra = 1
+    fields = ("course", "started_at", "is_active")
+    autocomplete_fields = ("course",)
+
+
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    inlines = [EnrollmentInline]
 
 
 @admin.register(Profile)
