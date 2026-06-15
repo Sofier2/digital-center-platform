@@ -71,8 +71,54 @@ digital-center-platform/
 
 ## Наступні кроки
 
-- Додати форму здачі домашнього завдання з кабінету учня.
-- Додати ролі й окремі сторінки для батьків/викладача.
 - Додати календар занять.
 - Додати повідомлення про нові домашні завдання.
-- Підготувати production-деплой із PostgreSQL.
+- Додати email-сповіщення для батьків і викладача.
+- Налаштувати регулярні backup бази й файлів.
+
+## Production: Render + PostgreSQL + Cloudinary
+
+Проєкт підготовлений до деплою на Render:
+
+- Django app запускається через `gunicorn`.
+- Статичні файли збираються через `collectstatic` і віддаються WhiteNoise.
+- База в production береться з `DATABASE_URL`, тобто Render PostgreSQL.
+- Завантажені файли, скріни й відео в production йдуть у Cloudinary через `CLOUDINARY_URL`.
+- Локально, якщо `DATABASE_URL` і `CLOUDINARY_URL` порожні, використовується SQLite і папка `media/`.
+
+### Render environment variables
+
+```env
+SECRET_KEY=generated-by-render
+DEBUG=False
+ALLOWED_HOSTS=your-platform.onrender.com
+CSRF_TRUSTED_ORIGINS=https://your-platform.onrender.com
+DATABASE_URL=from Render PostgreSQL
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+### Render commands
+
+Build command:
+
+```bash
+bash build.sh
+```
+
+Start command:
+
+```bash
+gunicorn config.wsgi:application
+```
+
+Після першого деплою створи адміністратора в Render Shell:
+
+```bash
+python manage.py createsuperuser
+```
+
+Якщо треба стартові курси:
+
+```bash
+python manage.py seed_courses
+```
