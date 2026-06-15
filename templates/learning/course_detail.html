@@ -1,0 +1,46 @@
+{% extends "learning/base.html" %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">{{ course.get_direction_display }}</span>
+    <h1>{{ course.title }}</h1>
+    <p>{{ course.short_description }}</p>
+    <ul class="hero-meta">
+      <li>{{ course.age_range }}</li>
+      {% if course.level %}<li>{{ course.level }}</li>{% endif %}
+      <li>{{ course.schedule }}</li>
+      <li>{{ course.final_project }}</li>
+    </ul>
+  </section>
+
+  <section class="module-list" aria-label="Модулі курсу">
+    {% for module in course.modules.all %}
+      <article class="module-card">
+        <div>
+          <span class="module-number">{{ forloop.counter|stringformat:"02d" }}</span>
+          <h2>{{ module.title }}</h2>
+          {% if module.description %}<p>{{ module.description }}</p>{% endif %}
+        </div>
+
+        <div class="lesson-list">
+          {% for lesson in module.lessons.all %}
+            <a class="lesson-row" href="{{ lesson.get_absolute_url }}">
+              <span>{{ lesson.order }}</span>
+              <strong>{{ lesson.title }}</strong>
+              <small>{% if lesson.is_available %}Доступний{% else %}Скоро{% endif %}</small>
+            </a>
+          {% empty %}
+            <p class="muted">Уроки ще не додані.</p>
+          {% endfor %}
+        </div>
+      </article>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Модулі ще не додані</h2>
+        <p>Створи модулі й уроки в Django admin.</p>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

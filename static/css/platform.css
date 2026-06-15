@@ -1,0 +1,494 @@
+:root {
+  --ink: #17103f;
+  --muted: #716d91;
+  --line: rgba(80, 57, 181, 0.16);
+  --white: #ffffff;
+  --soft: #f5f2ff;
+  --violet: #6d35f2;
+  --blue: #2458f2;
+  --deep: #170848;
+  --shadow: 0 22px 70px rgba(31, 18, 92, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(102, 64, 242, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(102, 64, 242, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 12% 2%, rgba(112, 55, 242, 0.16), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(36, 88, 242, 0.16), transparent 30%),
+    #fbfbff;
+  background-size: 42px 42px, 42px 42px, auto, auto, auto;
+  font-family: "Manrope", system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px clamp(16px, 4vw, 56px);
+  background: rgba(255, 255, 255, 0.76);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border-radius: 16px;
+  box-shadow: 0 16px 35px rgba(86, 42, 224, 0.24);
+  font-family: "Geologica", sans-serif;
+  font-weight: 900;
+}
+
+.brand strong,
+h1,
+h2 {
+  font-family: "Geologica", "Manrope", sans-serif;
+}
+
+.brand strong {
+  display: block;
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.brand small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-actions a,
+.top-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.top-actions form {
+  margin: 0;
+}
+
+main {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 70px;
+}
+
+.page-hero,
+.login-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+.page-hero {
+  padding: clamp(28px, 5vw, 58px);
+  color: var(--white);
+  background:
+    radial-gradient(circle at 84% 24%, rgba(255, 255, 255, 0.24), transparent 18%),
+    linear-gradient(135deg, var(--deep), var(--violet) 52%, var(--blue));
+}
+
+.page-hero.compact {
+  padding-bottom: 38px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  color: #f5efff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.page-hero h1,
+.login-copy h1 {
+  max-width: 780px;
+  margin: 0;
+  font-size: clamp(34px, 7vw, 72px);
+  line-height: 0.96;
+  letter-spacing: 0;
+}
+
+.page-hero p,
+.login-copy p {
+  max-width: 680px;
+  margin: 20px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+.hero-meta,
+.meta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-meta li,
+.meta-list li {
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.course-card,
+.module-card,
+.empty-state,
+.lesson-main,
+.lesson-side,
+.login-card {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.course-card {
+  display: flex;
+  min-height: 430px;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.course-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.course-card h2,
+.module-card h2,
+.lesson-main h1 {
+  margin: 22px 0 12px;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.course-card p,
+.module-card p,
+.lesson-content,
+.lead {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.course-card p {
+  flex: 1;
+}
+
+.primary-btn,
+.video-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border: 0;
+  border-radius: 16px;
+  font-weight: 950;
+  box-shadow: 0 18px 38px rgba(72, 55, 232, 0.24);
+}
+
+.module-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.module-card {
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr;
+  gap: 24px;
+  padding: 24px;
+}
+
+.module-number {
+  color: var(--violet);
+  font-weight: 950;
+}
+
+.lesson-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-row,
+.side-item {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.lesson-row {
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+}
+
+.lesson-row span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.lesson-row small,
+.side-item small,
+.muted {
+  color: var(--muted);
+}
+
+.lesson-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 18px;
+}
+
+.lesson-main,
+.lesson-side,
+.empty-state {
+  padding: 26px;
+}
+
+.lesson-main .eyebrow,
+.login-card .eyebrow {
+  color: var(--violet);
+  background: var(--soft);
+}
+
+.back-link {
+  color: var(--violet);
+  font-weight: 900;
+}
+
+.lesson-content {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.lesson-side {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.lesson-side h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.side-item + .side-item {
+  margin-top: 10px;
+}
+
+.side-item em {
+  color: var(--violet);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.login-shell {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  min-height: 610px;
+  padding: clamp(20px, 4vw, 38px);
+  color: var(--white);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.22), transparent 20%),
+    linear-gradient(135deg, var(--deep), var(--violet) 52%, var(--blue));
+}
+
+.login-copy {
+  align-self: center;
+}
+
+.login-card {
+  align-self: center;
+  padding: 26px;
+  color: var(--ink);
+}
+
+.login-card h2 {
+  margin: 0 0 18px;
+  font-size: 28px;
+}
+
+.login-card label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.login-card input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: #f8f7ff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  outline: none;
+}
+
+.login-card input:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 4px rgba(109, 53, 242, 0.12);
+}
+
+.form-error {
+  padding: 12px 14px;
+  color: #a4163a;
+  background: #fff0f4;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+@media (max-width: 920px) {
+  .course-grid,
+  .module-card,
+  .lesson-layout,
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .course-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .top-actions a,
+  .top-actions button,
+  .top-actions form {
+    flex: 1;
+  }
+
+  .brand strong {
+    font-size: 15px;
+  }
+
+  main {
+    width: min(100% - 20px, 1180px);
+    padding-top: 20px;
+  }
+
+  .page-hero,
+  .login-shell,
+  .course-card,
+  .module-card,
+  .lesson-main,
+  .lesson-side {
+    border-radius: 20px;
+  }
+
+  .page-hero h1,
+  .login-copy h1 {
+    font-size: 36px;
+  }
+
+  .page-hero p,
+  .login-copy p {
+    font-size: 16px;
+  }
+
+  .lesson-row {
+    grid-template-columns: 34px 1fr;
+  }
+
+  .lesson-row small {
+    grid-column: 2;
+  }
+}

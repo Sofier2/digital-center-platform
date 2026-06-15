@@ -1,0 +1,39 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Мій кабінет{% endblock %}
+
+{% block content %}
+  <section class="page-hero">
+    <span class="eyebrow">Мій прогрес</span>
+    <h1>Привіт, {{ user.first_name|default:user.username }}</h1>
+    <p>Тут зібрані активні курси, уроки, матеріали й домашні завдання.</p>
+  </section>
+
+  <section class="course-grid" aria-label="Курси">
+    {% for course in courses %}
+      <article class="course-card">
+        <div class="course-top">
+          <span>{{ course.get_direction_display }}</span>
+          <strong>{{ course.age_range }}</strong>
+        </div>
+        <h2>{{ course.title }}</h2>
+        <p>{{ course.short_description }}</p>
+        <ul class="meta-list">
+          <li>{{ course.schedule }}</li>
+          {% if course.level %}<li>{{ course.level }}</li>{% endif %}
+          <li>{{ course.price }}</li>
+          <li>{{ course.final_project }}</li>
+        </ul>
+        <a class="primary-btn" href="{{ course.get_absolute_url }}">Відкрити курс</a>
+      </article>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Курсів поки немає</h2>
+        <p>Додай курси, модулі й уроки через Django admin.</p>
+        {% if user.is_staff %}
+          <a class="primary-btn" href="{% url 'admin:index' %}">Перейти в адмінку</a>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

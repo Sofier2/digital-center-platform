@@ -1,0 +1,47 @@
+{% extends "learning/base.html" %}
+
+{% block title %}{{ lesson.title }}{% endblock %}
+
+{% block content %}
+  <section class="lesson-layout">
+    <article class="lesson-main">
+      <a class="back-link" href="{{ lesson.module.course.get_absolute_url }}">Назад до курсу</a>
+      <span class="eyebrow">{{ lesson.module.course.title }}</span>
+      <h1>{{ lesson.title }}</h1>
+      {% if lesson.summary %}<p class="lead">{{ lesson.summary }}</p>{% endif %}
+      {% if lesson.video_url %}
+        <a class="video-link" href="{{ lesson.video_url }}" target="_blank" rel="noreferrer">Відкрити відео або зустріч</a>
+      {% endif %}
+      <div class="lesson-content">
+        {{ lesson.content|linebreaks }}
+      </div>
+    </article>
+
+    <aside class="lesson-side">
+      <section>
+        <h2>Матеріали</h2>
+        {% for material in lesson.materials.all %}
+          <a class="side-item" href="{% if material.file %}{{ material.file.url }}{% else %}{{ material.external_url }}{% endif %}" target="_blank" rel="noreferrer">
+            <strong>{{ material.title }}</strong>
+            {% if material.description %}<small>{{ material.description }}</small>{% endif %}
+          </a>
+        {% empty %}
+          <p class="muted">Матеріали ще не додані.</p>
+        {% endfor %}
+      </section>
+
+      <section>
+        <h2>Домашні завдання</h2>
+        {% for assignment in lesson.assignments.all %}
+          <div class="side-item">
+            <strong>{{ assignment.title }}</strong>
+            <small>{{ assignment.task|truncatechars:120 }}</small>
+            {% if assignment.due_date %}<em>До {{ assignment.due_date }}</em>{% endif %}
+          </div>
+        {% empty %}
+          <p class="muted">Домашніх завдань поки немає.</p>
+        {% endfor %}
+      </section>
+    </aside>
+  </section>
+{% endblock %}

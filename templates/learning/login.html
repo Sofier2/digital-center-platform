@@ -1,0 +1,32 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Вхід до платформи{% endblock %}
+
+{% block content %}
+  <section class="login-shell">
+    <div class="login-copy">
+      <span class="eyebrow">Навчальний кабінет</span>
+      <h1>Уроки, матеріали й прогрес дитини в одному місці</h1>
+      <p>
+        Учні бачать свої курси, уроки, домашні завдання та матеріали. Викладач керує всім через Django admin.
+      </p>
+    </div>
+
+    <form class="login-card" method="post">
+      {% csrf_token %}
+      <h2>Увійти</h2>
+      {% if form.errors %}
+        <p class="form-error">Перевір логін і пароль.</p>
+      {% endif %}
+      <label>
+        Логін
+        {{ form.username }}
+      </label>
+      <label>
+        Пароль
+        {{ form.password }}
+      </label>
+      <button class="primary-btn" type="submit">Увійти в кабінет</button>
+    </form>
+  </section>
+{% endblock %}
