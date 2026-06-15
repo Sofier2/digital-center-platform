@@ -1001,7 +1001,6 @@ main {
 }
 
 .page-hero,
-.login-shell,
 .course-card,
 .module-card,
 .empty-state,
@@ -1024,6 +1023,26 @@ main {
   background:
     radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.24), transparent 18%),
     linear-gradient(135deg, #150846 0%, #5524d9 52%, #1959ed 100%);
+}
+
+.login-shell {
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.22), transparent 24%),
+    radial-gradient(circle at 72% 70%, rgba(36, 88, 242, 0.22), transparent 24%),
+    linear-gradient(135deg, #150846 0%, #5b25dc 52%, #1d5af0 100%);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: 0 24px 70px rgba(31, 18, 92, 0.16);
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.login-copy .eyebrow {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 .page-hero.admin-hero {
