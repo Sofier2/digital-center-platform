@@ -167,6 +167,97 @@ class Assignment(models.Model):
         return self.title
 
 
+class Quiz(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="quizzes", verbose_name="урок")
+    title = models.CharField("назва тесту", max_length=180)
+    description = models.TextField("опис", blank=True)
+    max_points = models.PositiveIntegerField("максимум балів", default=100)
+    passing_percent = models.PositiveIntegerField("прохідний відсоток", default=60)
+    is_published = models.BooleanField("опубліковано", default=True)
+    allow_retakes = models.BooleanField("дозволити повторне проходження", default=True)
+    order = models.PositiveIntegerField("порядок", default=1)
+
+    class Meta:
+        verbose_name = "тест"
+        verbose_name_plural = "тести"
+        ordering = ["lesson", "order", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("take_quiz", kwargs={"pk": self.pk})
+
+
+class QuizQuestion(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="тест")
+    text = models.TextField("питання")
+    explanation = models.TextField("пояснення після відповіді", blank=True)
+    order = models.PositiveIntegerField("порядок", default=1)
+    is_active = models.BooleanField("активне", default=True)
+
+    class Meta:
+        verbose_name = "питання тесту"
+        verbose_name_plural = "питання тестів"
+        ordering = ["quiz", "order", "id"]
+
+    def __str__(self):
+        return self.text[:80]
+
+
+class QuizChoice(models.Model):
+    question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="choices", verbose_name="питання")
+    text = models.CharField("варіант відповіді", max_length=255)
+    is_correct = models.BooleanField("правильна відповідь", default=False)
+    order = models.PositiveIntegerField("порядок", default=1)
+
+    class Meta:
+        verbose_name = "варіант відповіді"
+        verbose_name_plural = "варіанти відповідей"
+        ordering = ["question", "order", "id"]
+
+    def __str__(self):
+        return self.text
+
+
+class QuizAttempt(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name="тест")
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="учень")
+    correct_count = models.PositiveIntegerField("правильних відповідей", default=0)
+    total_count = models.PositiveIntegerField("усього питань", default=0)
+    score_percent = models.PositiveIntegerField("відсоток", default=0)
+    points = models.PositiveIntegerField("бали", default=0)
+    started_at = models.DateTimeField("розпочато", auto_now_add=True)
+    completed_at = models.DateTimeField("завершено", auto_now=True)
+
+    class Meta:
+        verbose_name = "результат тесту"
+        verbose_name_plural = "результати тестів"
+        ordering = ["-completed_at"]
+
+    @property
+    def is_passed(self):
+        return self.score_percent >= self.quiz.passing_percent
+
+    def __str__(self):
+        return f"{self.student} - {self.quiz}: {self.score_percent}%"
+
+
+class QuizAnswer(models.Model):
+    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name="answers", verbose_name="спроба")
+    question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="answers", verbose_name="питання")
+    selected_choice = models.ForeignKey(QuizChoice, on_delete=models.SET_NULL, related_name="answers", verbose_name="обрана відповідь", blank=True, null=True)
+    is_correct = models.BooleanField("правильно", default=False)
+
+    class Meta:
+        verbose_name = "відповідь у тесті"
+        verbose_name_plural = "відповіді у тестах"
+        ordering = ["attempt", "question__order", "question_id"]
+
+    def __str__(self):
+        return f"{self.question} - {self.selected_choice}"
+
+
 class Submission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name="submissions", verbose_name="завдання")
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="submissions", verbose_name="учень")

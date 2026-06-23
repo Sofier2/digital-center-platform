@@ -78,6 +78,34 @@
           <p class="muted">Домашніх завдань поки немає.</p>
         {% endfor %}
       </section>
+
+      <section>
+        <h2>Тести</h2>
+        {% for quiz in lesson.quizzes.all %}
+          {% if quiz.is_published %}
+            {% with attempt=quiz_attempts|dict_get:quiz.id %}
+              <div class="side-item quiz-item">
+                <strong>{{ quiz.title }}</strong>
+                {% if quiz.description %}<small>{{ quiz.description|truncatechars:120 }}</small>{% endif %}
+                <em>{{ quiz.max_points }} балів · прохідний {{ quiz.passing_percent }}%</em>
+                {% if attempt %}
+                  <b class="{% if attempt.is_passed %}grade-pill{% else %}pending-pill{% endif %}">
+                    {{ attempt.score_percent }}% · {{ attempt.points }}/{{ quiz.max_points }}
+                  </b>
+                  <a class="small-action" href="{% url 'quiz_result' attempt.id %}">Переглянути результат</a>
+                  {% if quiz.allow_retakes %}
+                    <a class="small-action ghost-action" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>
+                  {% endif %}
+                {% else %}
+                  <a class="small-action" href="{{ quiz.get_absolute_url }}">Пройти тест</a>
+                {% endif %}
+              </div>
+            {% endwith %}
+          {% endif %}
+        {% empty %}
+          <p class="muted">Тести поки не додані.</p>
+        {% endfor %}
+      </section>
     </aside>
   </section>
 {% endblock %}

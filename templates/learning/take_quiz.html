@@ -1,0 +1,46 @@
+{% extends "learning/base.html" %}
+
+{% block title %}{{ quiz.title }}{% endblock %}
+
+{% block content %}
+  <section class="quiz-shell">
+    <article class="lesson-main quiz-intro">
+      <a class="back-link" href="{{ quiz.lesson.get_absolute_url }}">Назад до уроку</a>
+      <span class="eyebrow light">{{ quiz.lesson.module.course.title }}</span>
+      <h1>{{ quiz.title }}</h1>
+      {% if quiz.description %}<p class="lead">{{ quiz.description }}</p>{% endif %}
+      <ul class="quiz-meta">
+        <li>{{ questions_count }} питань</li>
+        <li>{{ quiz.max_points }} балів</li>
+        <li>Прохідний результат: {{ quiz.passing_percent }}%</li>
+      </ul>
+      {% if latest_attempt %}
+        <div class="checked-box">
+          <strong>Останній результат: {{ latest_attempt.score_percent }}%</strong>
+          <p>{{ latest_attempt.points }}/{{ quiz.max_points }} балів</p>
+        </div>
+      {% endif %}
+    </article>
+
+    <form class="quiz-card" method="post">
+      {% csrf_token %}
+      {% if form.fields %}
+        {% for field in form %}
+          <fieldset class="quiz-question">
+            <legend>{{ forloop.counter }}. {{ field.label }}</legend>
+            <div class="choice-list">
+              {{ field }}
+            </div>
+            {% if field.errors %}<small class="form-error">{{ field.errors|striptags }}</small>{% endif %}
+          </fieldset>
+        {% endfor %}
+        <button class="primary-btn" type="submit">Завершити тест</button>
+      {% else %}
+        <div class="empty-state compact-empty">
+          <h2>Питання ще не додані</h2>
+          <p>Додай питання і варіанти відповідей у Django admin.</p>
+        </div>
+      {% endif %}
+    </form>
+  </section>
+{% endblock %}

@@ -6,8 +6,20 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import ReviewSubmissionForm, SubmissionForm
-from .models import Assignment, Course, Enrollment, Lesson, LessonProgress, ParentChild, Submission, SubmissionAttachment
+from .forms import QuizTakeForm, ReviewSubmissionForm, SubmissionForm
+from .models import (
+    Assignment,
+    Course,
+    Enrollment,
+    Lesson,
+    LessonProgress,
+    ParentChild,
+    Quiz,
+    QuizAnswer,
+    QuizAttempt,
+    Submission,
+    SubmissionAttachment,
+)
 
 
 def is_platform_manager(user):
@@ -61,6 +73,7 @@ def parent_dashboard(request):
         child = link.child
         enrollments = child.enrollments.select_related("course").filter(is_active=True)
         submissions = child.submissions.select_related("assignment", "assignment__lesson", "assignment__lesson__module__course").prefetch_related("attachments").order_by("-submitted_at")
+        quiz_attempts = child.quiz_attempts.select_related("quiz", "quiz__lesson", "quiz__lesson__module__course").order_by("-completed_at")
         lessons_total = Lesson.objects.filter(module__course__enrollments__student=child, module__course__enrollments__is_active=True).distinct().count()
         lessons_done = LessonProgress.objects.filter(student=child, is_done=True, lesson__module__course__enrollments__student=child).distinct().count()
         children_data.append(
@@ -68,6 +81,7 @@ def parent_dashboard(request):
                 "child": child,
                 "enrollments": enrollments,
                 "submissions": submissions[:6],
+                "quiz_attempts": quiz_attempts[:6],
                 "pending_count": submissions.filter(points__isnull=True).count(),
                 "checked_count": submissions.filter(points__isnull=False).count(),
                 "lessons_total": lessons_total,
@@ -97,7 +111,7 @@ def course_detail(request, pk):
 @login_required
 def lesson_detail(request, pk):
     lesson = get_object_or_404(
-        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "assignments"),
+        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "assignments", "quizzes"),
         pk=pk,
         is_available=True,
     )
@@ -107,7 +121,77 @@ def lesson_detail(request, pk):
         item.assignment_id: item
         for item in Submission.objects.prefetch_related("attachments").filter(student=request.user, assignment__lesson=lesson)
     }
-    return render(request, "learning/lesson_detail.html", {"lesson": lesson, "submissions": submissions})
+    quiz_attempts = {}
+    for item in QuizAttempt.objects.filter(student=request.user, quiz__lesson=lesson).order_by("quiz_id", "-completed_at"):
+        quiz_attempts.setdefault(item.quiz_id, item)
+    return render(request, "learning/lesson_detail.html", {"lesson": lesson, "submissions": submissions, "quiz_attempts": quiz_attempts})
+
+
+@login_required
+def take_quiz(request, pk):
+    quiz = get_object_or_404(
+        Quiz.objects.select_related("lesson", "lesson__module", "lesson__module__course").prefetch_related("questions__choices"),
+        pk=pk,
+        is_published=True,
+    )
+    if not user_has_course_access(request.user, quiz.lesson.module.course):
+        return redirect("dashboard")
+
+    latest_attempt = QuizAttempt.objects.filter(quiz=quiz, student=request.user).order_by("-completed_at").first()
+    questions = [question for question in quiz.questions.all() if question.is_active and question.choices.exists()]
+    if latest_attempt and not quiz.allow_retakes and request.method != "POST":
+        return render(request, "learning/quiz_result.html", {"quiz": quiz, "attempt": latest_attempt})
+
+    if request.method == "POST":
+        if latest_attempt and not quiz.allow_retakes:
+            return redirect("quiz_result", pk=latest_attempt.pk)
+        form = QuizTakeForm(request.POST, questions=questions)
+        if form.is_valid():
+            correct_count = 0
+            selected_by_question = {}
+            for question in questions:
+                selected_id = int(form.cleaned_data[f"question_{question.id}"])
+                selected_choice = next((choice for choice in question.choices.all() if choice.id == selected_id), None)
+                selected_by_question[question.id] = selected_choice
+                if selected_choice and selected_choice.is_correct:
+                    correct_count += 1
+
+            total_count = len(questions)
+            score_percent = round((correct_count / total_count) * 100) if total_count else 0
+            points = round((correct_count / total_count) * quiz.max_points) if total_count else 0
+            attempt = QuizAttempt.objects.create(
+                quiz=quiz,
+                student=request.user,
+                correct_count=correct_count,
+                total_count=total_count,
+                score_percent=score_percent,
+                points=points,
+            )
+            for question in questions:
+                selected_choice = selected_by_question.get(question.id)
+                QuizAnswer.objects.create(
+                    attempt=attempt,
+                    question=question,
+                    selected_choice=selected_choice,
+                    is_correct=bool(selected_choice and selected_choice.is_correct),
+                )
+            messages.success(request, "Тест завершено. Результат збережено в кабінеті.")
+            return redirect("quiz_result", pk=attempt.pk)
+    else:
+        form = QuizTakeForm(questions=questions)
+
+    return render(request, "learning/take_quiz.html", {"quiz": quiz, "form": form, "questions_count": len(questions), "latest_attempt": latest_attempt})
+
+
+@login_required
+def quiz_result(request, pk):
+    attempt = get_object_or_404(
+        QuizAttempt.objects.select_related("quiz", "quiz__lesson", "quiz__lesson__module", "quiz__lesson__module__course").prefetch_related("answers__question", "answers__selected_choice"),
+        pk=pk,
+    )
+    if attempt.student != request.user and not is_platform_manager(request.user):
+        return redirect("dashboard")
+    return render(request, "learning/quiz_result.html", {"quiz": attempt.quiz, "attempt": attempt})
 
 
 @login_required
@@ -159,12 +243,15 @@ def submit_assignment(request, pk):
 @user_passes_test(is_platform_manager)
 def platform_admin_dashboard(request):
     submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson").prefetch_related("attachments").order_by("-submitted_at")[:8]
+    quiz_attempts = QuizAttempt.objects.select_related("student", "quiz", "quiz__lesson").order_by("-completed_at")[:8]
     context = {
         "courses_count": Course.objects.count(),
         "students_count": User.objects.filter(enrollments__isnull=False).distinct().count(),
         "pending_count": Submission.objects.filter(points__isnull=True).count(),
         "checked_count": Submission.objects.filter(points__isnull=False).count(),
+        "quiz_attempts_count": QuizAttempt.objects.count(),
         "submissions": submissions,
+        "quiz_attempts": quiz_attempts,
     }
     return render(request, "learning/platform_admin/dashboard.html", context)
 
@@ -216,6 +303,13 @@ def platform_admin_submissions(request):
     else:
         submissions = submissions.filter(points__isnull=True)
     return render(request, "learning/platform_admin/submissions.html", {"submissions": submissions, "status": status})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_quizzes(request):
+    attempts = QuizAttempt.objects.select_related("student", "quiz", "quiz__lesson", "quiz__lesson__module__course").order_by("-completed_at")
+    return render(request, "learning/platform_admin/quizzes.html", {"attempts": attempts})
 
 
 @login_required

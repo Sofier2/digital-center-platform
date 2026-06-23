@@ -6,7 +6,7 @@
   <section class="page-hero admin-hero">
     <span class="eyebrow">Панель викладача</span>
     <h1>Навчальна платформа центру</h1>
-    <p>Керування курсами, доступами учнів, домашніми роботами та оцінюванням в одному кабінеті.</p>
+    <p>Керування курсами, доступами учнів, домашніми роботами, тестами та оцінюванням в одному кабінеті.</p>
   </section>
 
   <section class="admin-stats">
@@ -14,6 +14,7 @@
     <a href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
     <a href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
     <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
+    <a href="{% url 'platform_admin_quizzes' %}"><strong>{{ quiz_attempts_count }}</strong><span>Тести</span></a>
   </section>
 
   <section class="admin-panel">
@@ -30,6 +31,24 @@
         </a>
       {% empty %}
         <p class="muted">Робіт ще немає.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="section-title">
+      <span class="eyebrow light">Тестування</span>
+      <h2>Останні результати тестів</h2>
+    </div>
+    <div class="table-list">
+      {% for attempt in quiz_attempts %}
+        <a class="table-row" href="{% url 'quiz_result' attempt.id %}">
+          <span>{{ attempt.student.get_full_name|default:attempt.student.username }}</span>
+          <strong>{{ attempt.quiz.title }}</strong>
+          <b>{{ attempt.score_percent }}%</b>
+        </a>
+      {% empty %}
+        <p class="muted">Результатів тестів ще немає.</p>
       {% endfor %}
     </div>
   </section>

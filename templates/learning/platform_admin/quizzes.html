@@ -1,0 +1,27 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Результати тестів{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact admin-hero">
+    <span class="eyebrow">Тестування</span>
+    <h1>Результати тестів студентів</h1>
+    <p>Тут видно, хто пройшов тест, скільки набрав і який курс/урок це стосується.</p>
+  </section>
+
+  <section class="admin-panel">
+    <div class="table-list">
+      {% for attempt in attempts %}
+        <a class="table-row rich" href="{% url 'quiz_result' attempt.id %}">
+          <span>{{ attempt.student.get_full_name|default:attempt.student.username }}</span>
+          <strong>{{ attempt.quiz.title }}</strong>
+          <small>{{ attempt.quiz.lesson.module.course.title }} · {{ attempt.quiz.lesson.title }}</small>
+          <b>{{ attempt.score_percent }}%</b>
+          <em>{{ attempt.points }}/{{ attempt.quiz.max_points }}</em>
+        </a>
+      {% empty %}
+        <p class="muted">Результатів тестів ще немає.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

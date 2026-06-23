@@ -13,6 +13,11 @@ from .models import (
     Module,
     ParentChild,
     Profile,
+    Quiz,
+    QuizAnswer,
+    QuizAttempt,
+    QuizChoice,
+    QuizQuestion,
     Submission,
     SubmissionAttachment,
 )
@@ -97,12 +102,18 @@ class AssignmentInline(admin.TabularInline):
     extra = 1
 
 
+class QuizInline(admin.TabularInline):
+    model = Quiz
+    extra = 1
+    fields = ("title", "max_points", "passing_percent", "is_published", "allow_retakes", "order")
+
+
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("title", "module", "order", "is_available")
     list_filter = ("is_available", "module__course")
     search_fields = ("title", "summary", "content")
-    inlines = [MaterialInline, AssignmentInline]
+    inlines = [MaterialInline, AssignmentInline, QuizInline]
 
 
 @admin.register(Material)
@@ -124,6 +135,58 @@ class AssignmentAdmin(admin.ModelAdmin):
     list_display = ("title", "lesson", "due_date", "max_points")
     list_filter = ("lesson__module__course",)
     search_fields = ("title", "task")
+
+
+class QuizQuestionInline(admin.TabularInline):
+    model = QuizQuestion
+    extra = 1
+    fields = ("text", "explanation", "order", "is_active")
+
+
+@admin.register(Quiz)
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ("title", "lesson", "max_points", "passing_percent", "is_published", "allow_retakes")
+    list_filter = ("is_published", "lesson__module__course")
+    search_fields = ("title", "description", "lesson__title")
+    inlines = [QuizQuestionInline]
+
+
+class QuizChoiceInline(admin.TabularInline):
+    model = QuizChoice
+    extra = 3
+    fields = ("text", "is_correct", "order")
+
+
+@admin.register(QuizQuestion)
+class QuizQuestionAdmin(admin.ModelAdmin):
+    list_display = ("text", "quiz", "order", "is_active")
+    list_filter = ("quiz__lesson__module__course", "is_active")
+    search_fields = ("text", "quiz__title")
+    inlines = [QuizChoiceInline]
+
+
+@admin.register(QuizChoice)
+class QuizChoiceAdmin(admin.ModelAdmin):
+    list_display = ("text", "question", "is_correct", "order")
+    list_filter = ("is_correct", "question__quiz")
+    search_fields = ("text", "question__text")
+
+
+class QuizAnswerInline(admin.TabularInline):
+    model = QuizAnswer
+    extra = 0
+    fields = ("question", "selected_choice", "is_correct")
+    readonly_fields = ("question", "selected_choice", "is_correct")
+    can_delete = False
+
+
+@admin.register(QuizAttempt)
+class QuizAttemptAdmin(admin.ModelAdmin):
+    list_display = ("quiz", "student", "score_percent", "points", "correct_count", "total_count", "completed_at")
+    list_filter = ("quiz__lesson__module__course", "quiz")
+    search_fields = ("student__username", "student__first_name", "student__last_name", "quiz__title")
+    readonly_fields = ("quiz", "student", "correct_count", "total_count", "score_percent", "points", "started_at", "completed_at")
+    inlines = [QuizAnswerInline]
 
 
 class SubmissionAttachmentInline(admin.TabularInline):

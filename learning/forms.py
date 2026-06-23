@@ -58,3 +58,17 @@ class ReviewSubmissionForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class QuizTakeForm(forms.Form):
+    def __init__(self, *args, questions=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.questions = list(questions or [])
+        for question in self.questions:
+            choices = [(choice.id, choice.text) for choice in question.choices.all()]
+            self.fields[f"question_{question.id}"] = forms.ChoiceField(
+                label=question.text,
+                choices=choices,
+                widget=forms.RadioSelect,
+                required=True,
+            )

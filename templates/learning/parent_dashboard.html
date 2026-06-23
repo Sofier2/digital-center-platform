@@ -6,7 +6,7 @@
   <section class="page-hero parent-hero">
     <span class="eyebrow">Кабінет батьків</span>
     <h1>Прогрес дитини без зайвих питань</h1>
-    <p>Курси, домашні завдання, оцінки й коментарі викладача зібрані в одному місці.</p>
+    <p>Курси, домашні завдання, тести, оцінки й коментарі викладача зібрані в одному місці.</p>
   </section>
 
   <section class="parent-grid">
@@ -67,6 +67,22 @@
               </div>
             {% empty %}
               <p class="muted">Зданих робіт ще немає.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="parent-section">
+          <h2>Останні тести</h2>
+          <div class="result-list parent-results">
+            {% for attempt in item.quiz_attempts %}
+              <div class="result-card">
+                <strong>{{ attempt.quiz.title }}</strong>
+                <span>{{ attempt.quiz.lesson.module.course.title }} · {{ attempt.quiz.lesson.title }}</span>
+                <b>{{ attempt.score_percent }}%</b>
+                <p>{{ attempt.points }}/{{ attempt.quiz.max_points }} балів</p>
+              </div>
+            {% empty %}
+              <p class="muted">Пройдених тестів ще немає.</p>
             {% endfor %}
           </div>
         </div>
