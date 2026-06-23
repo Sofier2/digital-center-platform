@@ -1,0 +1,15 @@
+{% load learning_extras %}
+{% if file %}
+  <div class="file-preview">
+    {% if file|is_image_file %}
+      <a class="preview-frame" href="{{ file.url }}" target="_blank" rel="noreferrer">
+        <img src="{{ file.url }}" alt="{{ title|default:file|basename }}">
+      </a>
+    {% elif file|is_video_file %}
+      <video class="preview-video" src="{{ file.url }}" controls preload="metadata"></video>
+    {% endif %}
+    <a class="file-link" href="{{ file.url }}" target="_blank" rel="noreferrer">
+      {{ title|default:file|basename }}
+    </a>
+  </div>
+{% endif %}

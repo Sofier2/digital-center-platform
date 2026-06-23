@@ -26,17 +26,17 @@
             <strong>{{ material.title }}</strong>
             {% if material.description %}<small>{{ material.description }}</small>{% endif %}
             {% if material.file %}
-              <a class="file-link" href="{{ material.file.url }}" target="_blank" rel="noreferrer">Основний файл</a>
+              {% include "learning/partials/file_preview.html" with file=material.file title="Основний файл" %}
             {% endif %}
             {% if material.external_url %}
               <a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Основне посилання</a>
             {% endif %}
             {% for attachment in material.attachments.all %}
               {% if attachment.file %}
-                <a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title }}</a>
+                {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
               {% endif %}
               {% if attachment.external_url %}
-                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title }}</a>
+                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
               {% endif %}
               {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
             {% empty %}

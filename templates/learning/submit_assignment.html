@@ -38,14 +38,14 @@
         {{ form.extra_links }}
       </label>
       {% if submission.file %}
-        <a class="file-link" href="{{ submission.file.url }}" target="_blank" rel="noreferrer">Переглянути поточний файл</a>
+        {% include "learning/partials/file_preview.html" with file=submission.file title="Поточний файл" %}
       {% endif %}
       {% if submission and submission.attachments.all %}
         <div class="attachment-list">
           <strong>Уже додані вкладення</strong>
           {% for attachment in submission.attachments.all %}
             {% if attachment.file %}
-              <a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Файл" }}</a>
+              {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
             {% endif %}
             {% if attachment.external_url %}
               <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>

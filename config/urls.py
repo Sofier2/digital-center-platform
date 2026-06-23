@@ -23,3 +23,5 @@ if not settings.DEBUG:
         re_path(r"^static/img/(?P<path>.*)$", serve, {"document_root": settings.BASE_DIR / "static" / "img"}),
         re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT}),
     ] + urlpatterns
+    if not getattr(settings, "CLOUDINARY_STORAGE", None):
+        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
