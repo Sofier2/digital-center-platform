@@ -102,7 +102,14 @@ STORAGES = {
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-if os.getenv("CLOUDINARY_URL"):
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "").strip()
+CLOUDINARY_PLACEHOLDERS = ("api_key", "api_secret", "cloud_name")
+CLOUDINARY_CONFIGURED = (
+    CLOUDINARY_URL.startswith("cloudinary://")
+    and not any(placeholder in CLOUDINARY_URL.lower() for placeholder in CLOUDINARY_PLACEHOLDERS)
+)
+
+if CLOUDINARY_CONFIGURED:
     CLOUDINARY_STORAGE = {
         "SECURE": True,
     }

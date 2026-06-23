@@ -26,11 +26,13 @@ python manage.py runserver
 
 У production завантажені матеріали та домашні роботи мають зберігатися в Cloudinary. Render не підходить як постійне файлове сховище: локальна папка `media/` може очиститися після redeploy або перезапуску.
 
-Обов'язково додай на Render:
+Обов'язково додай на Render реальне значення з Cloudinary, не приклад:
 
 ```env
-CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+CLOUDINARY_URL=cloudinary://123456789012345:real_api_secret@your_real_cloud_name
 ```
+
+Не можна залишати `API_KEY`, `API_SECRET` або `CLOUD_NAME` буквально в змінній. Якщо в URL файлу видно `res.cloudinary.com/cloud_name/...`, значить у Render вставлено приклад, а не справжню назву Cloudinary cloud.
 
 Після цього нові завантаження будуть зберігатися в Cloudinary й відкриватися з платформи. Старі файли, які були завантажені до підключення Cloudinary у локальне сховище Render, можуть не відновитися, якщо Render уже видалив їх із контейнера.
 
@@ -42,7 +44,7 @@ DEBUG=False
 ALLOWED_HOSTS=digital-center-platform.onrender.com
 CSRF_TRUSTED_ORIGINS=https://digital-center-platform.onrender.com
 DATABASE_URL=from Render PostgreSQL
-CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+CLOUDINARY_URL=cloudinary://123456789012345:real_api_secret@your_real_cloud_name
 DJANGO_SUPERUSER_USERNAME=admin
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 DJANGO_SUPERUSER_PASSWORD=your-password
