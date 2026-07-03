@@ -137,10 +137,10 @@ class AssignmentAdmin(admin.ModelAdmin):
     search_fields = ("title", "task")
 
 
-class QuizQuestionInline(admin.TabularInline):
+class QuizQuestionInline(admin.StackedInline):
     model = QuizQuestion
     extra = 1
-    fields = ("text", "explanation", "order", "is_active")
+    fields = ("context_text", "audio_file", "audio_url", "text", "explanation", "order", "is_active")
 
 
 @admin.register(Quiz)
@@ -161,7 +161,13 @@ class QuizChoiceInline(admin.TabularInline):
 class QuizQuestionAdmin(admin.ModelAdmin):
     list_display = ("text", "quiz", "order", "is_active")
     list_filter = ("quiz__lesson__module__course", "is_active")
-    search_fields = ("text", "quiz__title")
+    search_fields = ("text", "context_text", "quiz__title")
+    fieldsets = (
+        ("Питання", {"fields": ("quiz", "text", "context_text")}),
+        ("Listening", {"fields": ("audio_file", "audio_url"), "description": "Завантаж аудіофайл або встав пряме посилання на MP3/M4A/WAV."}),
+        ("Після відповіді", {"fields": ("explanation",)}),
+        ("Налаштування", {"fields": ("order", "is_active")}),
+    )
     inlines = [QuizChoiceInline]
 
 

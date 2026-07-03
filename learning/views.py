@@ -185,7 +185,21 @@ def take_quiz(request, pk):
     else:
         form = QuizTakeForm(questions=questions)
 
-    return render(request, "learning/take_quiz.html", {"quiz": quiz, "form": form, "questions_count": len(questions), "latest_attempt": latest_attempt})
+    question_fields = [
+        {"question": question, "field": form[f"question_{question.id}"]}
+        for question in questions
+    ]
+    return render(
+        request,
+        "learning/take_quiz.html",
+        {
+            "quiz": quiz,
+            "form": form,
+            "question_fields": question_fields,
+            "questions_count": len(questions),
+            "latest_attempt": latest_attempt,
+        },
+    )
 
 
 @login_required

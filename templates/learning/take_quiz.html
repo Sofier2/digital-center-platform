@@ -24,17 +24,45 @@
 
     <form class="quiz-card" method="post">
       {% csrf_token %}
-      {% if form.fields %}
-        {% for field in form %}
+      {% if question_fields %}
+        {% for item in question_fields %}
           <fieldset class="quiz-question">
-            <legend>{{ forloop.counter }}. {{ field.label }}</legend>
+            <legend>{{ forloop.counter }}. {{ item.question.text }}</legend>
+
+            {% if item.question.context_text %}
+              <div class="quiz-support reading-passage">
+                <span class="support-label">Текст до питання</span>
+                <div>{{ item.question.context_text|linebreaks }}</div>
+              </div>
+            {% endif %}
+
+            {% if item.question.audio_file or item.question.audio_url %}
+              <div class="quiz-support listening-player">
+                <span class="support-label">Listening</span>
+                <strong>Прослухай аудіо перед відповіддю</strong>
+                <audio controls preload="metadata">
+                  {% if item.question.audio_file %}
+                    <source src="{{ item.question.audio_file.url }}">
+                  {% else %}
+                    <source src="{{ item.question.audio_url }}">
+                  {% endif %}
+                  Твій браузер не підтримує аудіоплеєр.
+                </audio>
+                {% if item.question.audio_file %}
+                  <a class="audio-fallback" href="{{ item.question.audio_file.url }}" target="_blank" rel="noreferrer">Відкрити аудіо окремо</a>
+                {% else %}
+                  <a class="audio-fallback" href="{{ item.question.audio_url }}" target="_blank" rel="noreferrer">Відкрити аудіо окремо</a>
+                {% endif %}
+              </div>
+            {% endif %}
+
             <div class="choice-list">
-              {{ field }}
+              {{ item.field }}
             </div>
-            {% if field.errors %}<small class="form-error">{{ field.errors|striptags }}</small>{% endif %}
+            {% if item.field.errors %}<small class="form-error">{{ item.field.errors|striptags }}</small>{% endif %}
           </fieldset>
         {% endfor %}
-        <button class="primary-btn" type="submit">Завершити тест</button>
+        <button class="primary-btn quiz-submit" type="submit">Завершити тест</button>
       {% else %}
         <div class="empty-state compact-empty">
           <h2>Питання ще не додані</h2>

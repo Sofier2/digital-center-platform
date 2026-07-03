@@ -27,6 +27,9 @@
       <h2>Відповіді</h2>
       {% for answer in attempt.answers.all %}
         <article class="answer-row {% if answer.is_correct %}correct{% else %}wrong{% endif %}">
+          {% if answer.question.context_text %}
+            <div class="result-context">{{ answer.question.context_text|linebreaks }}</div>
+          {% endif %}
           <strong>{{ forloop.counter }}. {{ answer.question.text }}</strong>
           <p>Твоя відповідь: {{ answer.selected_choice.text|default:"Не обрано" }}</p>
           {% if answer.question.explanation %}<small>{{ answer.question.explanation }}</small>{% endif %}

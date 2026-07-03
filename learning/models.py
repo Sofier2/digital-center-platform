@@ -191,6 +191,9 @@ class Quiz(models.Model):
 
 class QuizQuestion(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="тест")
+    context_text = models.TextField("текст або уривок до питання", blank=True)
+    audio_file = models.FileField("аудіо для listening", upload_to="quizzes/audio/", blank=True)
+    audio_url = models.URLField("пряме посилання на аудіо", blank=True)
     text = models.TextField("питання")
     explanation = models.TextField("пояснення після відповіді", blank=True)
     order = models.PositiveIntegerField("порядок", default=1)
