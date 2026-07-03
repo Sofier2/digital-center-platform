@@ -4,108 +4,163 @@
 {% block title %}{{ lesson.title }}{% endblock %}
 
 {% block content %}
-  <section class="lesson-layout">
-    <article class="lesson-main">
-      <a class="back-link" href="{{ lesson.module.course.get_absolute_url }}">Назад до курсу</a>
-      <span class="eyebrow">{{ lesson.module.course.title }}</span>
+  <section class="lesson-page">
+    <header class="lesson-overview">
+      <a class="back-link" href="{{ lesson.module.course.get_absolute_url }}">Назад до всіх уроків</a>
+      <span class="eyebrow light">{{ lesson.module.course.title }} · урок {{ lesson.order }}</span>
       <h1>{{ lesson.title }}</h1>
-      {% if lesson.summary %}<p class="lead">{{ lesson.summary }}</p>{% endif %}
-      {% if lesson.video_url %}
-        <a class="video-link" href="{{ lesson.video_url }}" target="_blank" rel="noreferrer">Відкрити відео або зустріч</a>
-      {% endif %}
-      <div class="lesson-content">
-        {{ lesson.content|linebreaks }}
-      </div>
-    </article>
+      {% if lesson.summary %}<p>{{ lesson.summary }}</p>{% endif %}
+      <nav class="lesson-step-nav" aria-label="Кроки уроку">
+        <a href="#topic"><span>1</span>Тема</a>
+        <a href="#materials"><span>2</span>Матеріали</a>
+        <a href="#homework"><span>3</span>Домашнє</a>
+        <a href="#tests"><span>4</span>Тест</a>
+      </nav>
+    </header>
 
-    <aside class="lesson-side">
-      <section>
-        <h2>Матеріали</h2>
-        {% for material in lesson.materials.all %}
-          <div class="side-item material-item">
-            <strong>{{ material.title }}</strong>
-            {% if material.description %}<small>{{ material.description }}</small>{% endif %}
-            {% if material.file %}
-              {% include "learning/partials/file_preview.html" with file=material.file title="Основний файл" %}
-            {% endif %}
-            {% if material.external_url %}
-              <a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Основне посилання</a>
-            {% endif %}
-            {% for attachment in material.attachments.all %}
-              {% if attachment.file %}
-                {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
-              {% endif %}
-              {% if attachment.external_url %}
-                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
-              {% endif %}
-              {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
+    <div class="lesson-flow">
+      <section class="lesson-step" id="topic">
+        <div class="step-rail"><span>01</span></div>
+        <div class="step-content">
+          <header class="step-heading">
+            <span>Спочатку</span>
+            <h2>Опрацюй тему уроку</h2>
+            <p>Прочитай пояснення і переглянь відео, якщо воно додане.</p>
+          </header>
+          {% if lesson.video_url %}
+            <a class="video-link lesson-action" href="{{ lesson.video_url }}" target="_blank" rel="noreferrer">Відкрити відео уроку</a>
+          {% endif %}
+          <div class="lesson-content">
+            {% if lesson.content %}{{ lesson.content|linebreaks }}{% else %}<p class="muted">Текст уроку ще не доданий.</p>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="lesson-step" id="materials">
+        <div class="step-rail"><span>02</span></div>
+        <div class="step-content">
+          <header class="step-heading">
+            <span>Під рукою</span>
+            <h2>Матеріали до уроку</h2>
+            <p>Відкрий файли, скріни та корисні посилання перед виконанням завдання.</p>
+          </header>
+          <div class="material-stack">
+            {% for material in lesson.materials.all %}
+              <article class="learning-item material-flow-item">
+                <div class="item-heading">
+                  <span class="item-kind">Матеріал {{ forloop.counter }}</span>
+                  <h3>{{ material.title }}</h3>
+                  {% if material.description %}<p>{{ material.description }}</p>{% endif %}
+                </div>
+                {% if material.file %}
+                  {% include "learning/partials/file_preview.html" with file=material.file title="Відкрити основний файл" %}
+                {% endif %}
+                {% if material.external_url %}
+                  <a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Відкрити посилання</a>
+                {% endif %}
+                {% for attachment in material.attachments.all %}
+                  {% if attachment.file %}
+                    {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
+                  {% endif %}
+                  {% if attachment.external_url %}
+                    <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Відкрити посилання" }}</a>
+                  {% endif %}
+                  {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
+                {% endfor %}
+              </article>
             {% empty %}
-              {% if not material.file and not material.external_url %}
-                <small>Вкладення ще не додані.</small>
-              {% endif %}
+              <div class="step-empty">Додаткових матеріалів для цього уроку немає.</div>
             {% endfor %}
           </div>
-        {% empty %}
-          <p class="muted">Матеріали ще не додані.</p>
-        {% endfor %}
+        </div>
       </section>
 
-      <section>
-        <h2>Домашні завдання</h2>
-        {% for assignment in lesson.assignments.all %}
-          {% with submission=submissions|dict_get:assignment.id %}
-          <div class="side-item homework-item">
-            <strong>{{ assignment.title }}</strong>
-            <small>{{ assignment.task|truncatechars:120 }}</small>
-            {% if assignment.due_date %}<em>До {{ assignment.due_date }}</em>{% endif %}
-            {% if submission %}
-              {% if submission.points != None %}
-                <b class="grade-pill">{{ submission.points }}/{{ assignment.max_points }}</b>
-                {% if submission.teacher_comment %}<small>{{ submission.teacher_comment }}</small>{% endif %}
-              {% else %}
-                <b class="pending-pill">Очікує перевірки</b>
-              {% endif %}
-              {% if submission.attachments.all %}
-                <small>Вкладень: {{ submission.attachments.count }}</small>
-              {% endif %}
-            {% endif %}
-            <a class="small-action" href="{% url 'submit_assignment' assignment.id %}">
-              {% if submission %}Оновити роботу{% else %}Здати роботу{% endif %}
-            </a>
-          </div>
-          {% endwith %}
-        {% empty %}
-          <p class="muted">Домашніх завдань поки немає.</p>
-        {% endfor %}
-      </section>
-
-      <section>
-        <h2>Тести</h2>
-        {% for quiz in lesson.quizzes.all %}
-          {% if quiz.is_published %}
-            {% with attempt=quiz_attempts|dict_get:quiz.id %}
-              <div class="side-item quiz-item">
-                <strong>{{ quiz.title }}</strong>
-                {% if quiz.description %}<small>{{ quiz.description|truncatechars:120 }}</small>{% endif %}
-                <em>{{ quiz.max_points }} балів · прохідний {{ quiz.passing_percent }}%</em>
-                {% if attempt %}
-                  <b class="{% if attempt.is_passed %}grade-pill{% else %}pending-pill{% endif %}">
-                    {{ attempt.score_percent }}% · {{ attempt.points }}/{{ quiz.max_points }}
-                  </b>
-                  <a class="small-action" href="{% url 'quiz_result' attempt.id %}">Переглянути результат</a>
-                  {% if quiz.allow_retakes %}
-                    <a class="small-action ghost-action" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>
+      <section class="lesson-step homework-step" id="homework">
+        <div class="step-rail"><span>03</span></div>
+        <div class="step-content">
+          <header class="step-heading">
+            <span>Головне завдання</span>
+            <h2>Виконай і завантаж домашню роботу</h2>
+            <p>Уважно прочитай умову. Кнопка завантаження є в кожному завданні нижче.</p>
+          </header>
+          <div class="homework-stack">
+            {% for assignment in lesson.assignments.all %}
+              {% with submission=submissions|dict_get:assignment.id %}
+                <article class="learning-item homework-flow-item">
+                  <div class="item-heading">
+                    <span class="item-kind homework-kind">Домашнє завдання {{ forloop.counter }}</span>
+                    <h3>{{ assignment.title }}</h3>
+                  </div>
+                  <div class="task-copy">{{ assignment.task|linebreaks }}</div>
+                  <div class="task-meta">
+                    {% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}
+                    <span>Максимум {{ assignment.max_points }} балів</span>
+                  </div>
+                  {% if submission %}
+                    <div class="submission-status {% if submission.points != None %}is-graded{% else %}is-waiting{% endif %}">
+                      {% if submission.points != None %}
+                        <strong>Оцінено: {{ submission.points }}/{{ assignment.max_points }}</strong>
+                        {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+                      {% else %}
+                        <strong>Роботу завантажено · очікує перевірки</strong>
+                      {% endif %}
+                    </div>
+                    <a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Оновити завантажену роботу</a>
+                  {% else %}
+                    <a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Завантажити домашню роботу</a>
                   {% endif %}
-                {% else %}
-                  <a class="small-action" href="{{ quiz.get_absolute_url }}">Пройти тест</a>
-                {% endif %}
-              </div>
-            {% endwith %}
-          {% endif %}
-        {% empty %}
-          <p class="muted">Тести поки не додані.</p>
-        {% endfor %}
+                </article>
+              {% endwith %}
+            {% empty %}
+              <div class="step-empty">Для цього уроку домашнього завдання немає.</div>
+            {% endfor %}
+          </div>
+        </div>
       </section>
-    </aside>
+
+      <section class="lesson-step" id="tests">
+        <div class="step-rail"><span>04</span></div>
+        <div class="step-content">
+          <header class="step-heading">
+            <span>Перевір себе</span>
+            <h2>Пройди тест</h2>
+            <p>Тест допоможе закріпити тему і одразу покаже результат.</p>
+          </header>
+          <div class="quiz-stack">
+            {% for quiz in lesson.quizzes.all %}
+              {% if quiz.is_published %}
+                {% with attempt=quiz_attempts|dict_get:quiz.id %}
+                  <article class="learning-item quiz-flow-item">
+                    <div class="item-heading">
+                      <span class="item-kind quiz-kind">Тест</span>
+                      <h3>{{ quiz.title }}</h3>
+                      {% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}
+                    </div>
+                    <div class="task-meta">
+                      <span>{{ quiz.max_points }} балів</span>
+                      <span>Прохідний результат {{ quiz.passing_percent }}%</span>
+                    </div>
+                    {% if attempt %}
+                      <div class="quiz-result-line {% if attempt.is_passed %}is-passed{% endif %}">
+                        <strong>{{ attempt.score_percent }}%</strong>
+                        <span>{{ attempt.points }}/{{ quiz.max_points }} балів</span>
+                      </div>
+                      <div class="item-actions">
+                        <a class="primary-btn" href="{% url 'quiz_result' attempt.id %}">Переглянути результат</a>
+                        {% if quiz.allow_retakes %}<a class="secondary-btn" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>{% endif %}
+                      </div>
+                    {% else %}
+                      <a class="primary-btn homework-upload" href="{{ quiz.get_absolute_url }}">Почати тест</a>
+                    {% endif %}
+                  </article>
+                {% endwith %}
+              {% endif %}
+            {% empty %}
+              <div class="step-empty">Тест для цього уроку ще не доданий.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
   </section>
 {% endblock %}

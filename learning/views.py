@@ -95,7 +95,7 @@ def parent_dashboard(request):
 @login_required
 def course_detail(request, pk):
     course = get_object_or_404(
-        Course.objects.prefetch_related("modules__lessons"),
+        Course.objects.prefetch_related("modules__lessons__assignments", "modules__lessons__quizzes"),
         pk=pk,
         is_published=True,
     )
@@ -175,6 +175,11 @@ def take_quiz(request, pk):
                     selected_choice=selected_choice,
                     is_correct=bool(selected_choice and selected_choice.is_correct),
                 )
+            LessonProgress.objects.update_or_create(
+                student=request.user,
+                lesson=quiz.lesson,
+                defaults={"is_done": True},
+            )
             messages.success(request, "Тест завершено. Результат збережено в кабінеті.")
             return redirect("quiz_result", pk=attempt.pk)
     else:
@@ -213,6 +218,11 @@ def submit_assignment(request, pk):
             result.points = None
             result.teacher_comment = ""
             result.save()
+            LessonProgress.objects.update_or_create(
+                student=request.user,
+                lesson=assignment.lesson,
+                defaults={"is_done": True},
+            )
             for uploaded_file in request.FILES.getlist("extra_files"):
                 SubmissionAttachment.objects.create(
                     submission=result,

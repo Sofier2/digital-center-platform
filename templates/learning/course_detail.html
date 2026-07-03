@@ -4,7 +4,7 @@
 {% block title %}{{ course.title }}{% endblock %}
 
 {% block content %}
-  <section class="page-hero compact">
+  <section class="page-hero compact course-hero">
     <span class="eyebrow">{{ course.get_direction_display }}</span>
     <h1>{{ course.title }}</h1>
     <p>{{ course.short_description }}</p>
@@ -16,29 +16,57 @@
     </ul>
   </section>
 
-  <section class="module-list" aria-label="Модулі курсу">
-    {% for module in course.modules.all %}
-      <article class="module-card">
-        <div>
-          <span class="module-number">{{ forloop.counter|stringformat:"02d" }}</span>
-          <h2>{{ module.title }}</h2>
-          {% if module.description %}<p>{{ module.description }}</p>{% endif %}
-        </div>
+  <section class="learning-path" aria-label="Навчальний маршрут курсу">
+    <header class="path-heading">
+      <span class="eyebrow light">Навчальний маршрут</span>
+      <h2>Уроки по порядку</h2>
+      <p>Відкривай уроки зверху вниз. У кожному уроці матеріали, домашнє завдання і тест зібрані в чітку послідовність.</p>
+    </header>
 
-        <div class="lesson-list">
+    {% for module in course.modules.all %}
+      <section class="path-module">
+        <header class="path-module-head">
+          <span class="module-number">{{ forloop.counter|stringformat:"02d" }}</span>
+          <div>
+            <small>Модуль {{ forloop.counter }}</small>
+            <h3>{{ module.title }}</h3>
+            {% if module.description %}<p>{{ module.description }}</p>{% endif %}
+          </div>
+        </header>
+
+        <div class="path-lessons">
           {% for lesson in module.lessons.all %}
-            <a class="lesson-row" href="{{ lesson.get_absolute_url }}">
-              <span>{{ lesson.order }}</span>
-              <strong>{{ lesson.title }}</strong>
-              <small>
-                {% if progress|dict_get:lesson.id %}Пройдено{% elif lesson.is_available %}Доступний{% else %}Скоро{% endif %}
-              </small>
-            </a>
+            {% if lesson.is_available %}
+              <a class="path-lesson {% if progress|dict_get:lesson.id %}is-complete{% endif %}" href="{{ lesson.get_absolute_url }}">
+                <span class="path-marker">{{ lesson.order|stringformat:"02d" }}</span>
+                <span class="path-lesson-copy">
+                  <small>Урок {{ lesson.order }}</small>
+                  <strong>{{ lesson.title }}</strong>
+                  {% if lesson.summary %}<span>{{ lesson.summary|truncatechars:130 }}</span>{% endif %}
+                  <span class="lesson-tags">
+                    {% if lesson.assignments.all %}<b>Домашнє завдання</b>{% endif %}
+                    {% if lesson.quizzes.all %}<b>Тест</b>{% endif %}
+                  </span>
+                </span>
+                <span class="path-status">
+                  {% if progress|dict_get:lesson.id %}Пройдено{% else %}Відкрити урок{% endif %}
+                </span>
+              </a>
+            {% else %}
+              <div class="path-lesson is-locked">
+                <span class="path-marker">{{ lesson.order|stringformat:"02d" }}</span>
+                <span class="path-lesson-copy">
+                  <small>Урок {{ lesson.order }}</small>
+                  <strong>{{ lesson.title }}</strong>
+                </span>
+                <span class="path-status">Скоро</span>
+              </div>
+            {% endif %}
           {% empty %}
-            <p class="muted">Уроки ще не додані.</p>
+            <p class="muted path-empty">Уроки ще не додані.</p>
           {% endfor %}
         </div>
-      </article>
+      </section>
     {% empty %}
       <article class="empty-state">
         <h2>Модулі ще не додані</h2>
