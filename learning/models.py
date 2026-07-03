@@ -171,6 +171,8 @@ class Quiz(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="quizzes", verbose_name="урок")
     title = models.CharField("назва тесту", max_length=180)
     description = models.TextField("опис", blank=True)
+    reading_title = models.CharField("заголовок тексту для reading", max_length=180, blank=True)
+    reading_text = models.TextField("спільний текст для reading", blank=True)
     max_points = models.PositiveIntegerField("максимум балів", default=100)
     passing_percent = models.PositiveIntegerField("прохідний відсоток", default=60)
     is_published = models.BooleanField("опубліковано", default=True)

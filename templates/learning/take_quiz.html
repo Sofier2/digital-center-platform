@@ -3,35 +3,53 @@
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
-  <section class="quiz-shell">
-    <article class="lesson-main quiz-intro">
-      <a class="back-link" href="{{ quiz.lesson.get_absolute_url }}">Назад до уроку</a>
-      <span class="eyebrow light">{{ quiz.lesson.module.course.title }}</span>
-      <h1>{{ quiz.title }}</h1>
-      {% if quiz.description %}<p class="lead">{{ quiz.description }}</p>{% endif %}
-      <ul class="quiz-meta">
-        <li>{{ questions_count }} питань</li>
-        <li>{{ quiz.max_points }} балів</li>
-        <li>Прохідний результат: {{ quiz.passing_percent }}%</li>
-      </ul>
-      {% if latest_attempt %}
-        <div class="checked-box">
-          <strong>Останній результат: {{ latest_attempt.score_percent }}%</strong>
-          <p>{{ latest_attempt.points }}/{{ quiz.max_points }} балів</p>
-        </div>
+  <section class="quiz-shell {% if quiz.reading_text %}has-reading{% endif %}">
+    <aside class="quiz-sidebar">
+      <article class="lesson-main quiz-intro">
+        <a class="back-link" href="{{ quiz.lesson.get_absolute_url }}">Назад до уроку</a>
+        <span class="eyebrow light">{{ quiz.lesson.module.course.title }}</span>
+        <h1>{{ quiz.title }}</h1>
+        {% if quiz.description %}<p class="lead">{{ quiz.description }}</p>{% endif %}
+        <ul class="quiz-meta">
+          <li>{{ questions_count }} питань</li>
+          <li>{{ quiz.max_points }} балів</li>
+          <li>Прохідний результат: {{ quiz.passing_percent }}%</li>
+        </ul>
+        {% if latest_attempt %}
+          <div class="checked-box">
+            <strong>Останній результат: {{ latest_attempt.score_percent }}%</strong>
+            <p>{{ latest_attempt.points }}/{{ quiz.max_points }} балів</p>
+          </div>
+        {% endif %}
+      </article>
+
+      {% if quiz.reading_text %}
+        <article class="quiz-reading-sheet" id="reading-text">
+          <header>
+            <span class="reading-badge">Reading</span>
+            <small>Текст залишається поруч під час проходження</small>
+            <h2>{{ quiz.reading_title|default:"Текст до завдань" }}</h2>
+          </header>
+          <div class="quiz-reading-body">{{ quiz.reading_text|linebreaks }}</div>
+        </article>
       {% endif %}
-    </article>
+    </aside>
 
     <form class="quiz-card" method="post">
       {% csrf_token %}
       {% if question_fields %}
+        <header class="quiz-questions-head">
+          <span class="eyebrow light">Питання</span>
+          <h2>Обери правильні відповіді</h2>
+          {% if quiz.reading_text %}<a href="#reading-text">Повернутися до тексту</a>{% endif %}
+        </header>
         {% for item in question_fields %}
           <fieldset class="quiz-question">
             <legend>{{ forloop.counter }}. {{ item.question.text }}</legend>
 
             {% if item.question.context_text %}
               <div class="quiz-support reading-passage">
-                <span class="support-label">Текст до питання</span>
+                <span class="support-label">Уривок до питання</span>
                 <div>{{ item.question.context_text|linebreaks }}</div>
               </div>
             {% endif %}
@@ -41,11 +59,7 @@
                 <span class="support-label">Listening</span>
                 <strong>Прослухай аудіо перед відповіддю</strong>
                 <audio controls preload="metadata">
-                  {% if item.question.audio_file %}
-                    <source src="{{ item.question.audio_file.url }}">
-                  {% else %}
-                    <source src="{{ item.question.audio_url }}">
-                  {% endif %}
+                  {% if item.question.audio_file %}<source src="{{ item.question.audio_file.url }}">{% else %}<source src="{{ item.question.audio_url }}">{% endif %}
                   Твій браузер не підтримує аудіоплеєр.
                 </audio>
                 {% if item.question.audio_file %}
@@ -56,9 +70,7 @@
               </div>
             {% endif %}
 
-            <div class="choice-list">
-              {{ item.field }}
-            </div>
+            <div class="choice-list">{{ item.field }}</div>
             {% if item.field.errors %}<small class="form-error">{{ item.field.errors|striptags }}</small>{% endif %}
           </fieldset>
         {% endfor %}
