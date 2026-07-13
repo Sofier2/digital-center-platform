@@ -18,12 +18,7 @@
         </div>
         <h2>{{ course.title }}</h2>
         <p>{{ course.short_description }}</p>
-        <ul class="meta-list">
-          <li>{{ course.age_range }}</li>
-          {% if course.level %}<li>{{ course.level }}</li>{% endif %}
-          <li>{{ course.schedule }}</li>
-          <li>{{ course.lessons_total }} уроків</li>
-        </ul>
+       
         <a class="primary-btn" href="{{ course.get_absolute_url }}">Переглянути як курс</a>
       </article>
     {% endfor %}
