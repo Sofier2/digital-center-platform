@@ -23,18 +23,13 @@
       {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
 
       <label class="upload-field compact-field">
-        <span class="field-number">01</span>
+        <span class="field-number"></span>
         <span class="field-copy"><strong>Аватарка</strong><small>Фото, ілюстрація або будь-який зрозумілий образ для профілю.</small></span>
         {{ form.avatar }}
         {% if form.avatar.errors %}<small class="form-error">{{ form.avatar.errors|striptags }}</small>{% endif %}
       </label>
 
-      <label class="upload-field compact-field">
-        <span class="field-number">02</span>
-        <span class="field-copy"><strong>Навчальна ціль</strong><small>Коротко напиши, над чим зараз працюєш.</small></span>
-        {{ form.learning_goal }}
-        {% if form.learning_goal.errors %}<small class="form-error">{{ form.learning_goal.errors|striptags }}</small>{% endif %}
-      </label>
+      
 
       <button class="primary-btn homework-submit-button" type="submit">Зберегти профіль</button>
     </form>
