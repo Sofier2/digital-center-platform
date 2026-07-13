@@ -15,7 +15,6 @@
       <div>
         <span class="eyebrow">Мій прогрес</span>
         <h1>Привіт, {{ user.first_name|default:user.username }}</h1>
-        <p>{% if profile.learning_goal %}{{ profile.learning_goal }}{% else %}Тут зібрані активні курси, уроки, матеріали, слова й домашні завдання.{% endif %}</p>
       </div>
     </div>
     <a class="secondary-btn profile-edit-link" href="{% url 'profile_settings' %}">Оновити профіль</a>
