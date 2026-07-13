@@ -169,11 +169,11 @@ def lesson_detail(request, pk):
     if not steps:
         # Lessons created before the step constructor keep their familiar full layout.
         steps = [
-            {"kind": "topic", "order": 1},
-            {"kind": "materials", "order": 2},
-            {"kind": "vocabulary", "order": 3},
-            {"kind": "homework", "order": 4},
-            {"kind": "quiz", "order": 5},
+            {"kind": "topic", "get_kind_display": "Тема уроку", "order": 1},
+            {"kind": "materials", "get_kind_display": "Матеріали", "order": 2},
+            {"kind": "vocabulary", "get_kind_display": "Слова", "order": 3},
+            {"kind": "homework", "get_kind_display": "Домашнє завдання", "order": 4},
+            {"kind": "quiz", "get_kind_display": "Тест", "order": 5},
         ]
     return render(
         request,

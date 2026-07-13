@@ -2804,14 +2804,14 @@ select:focus-visible {
 
 .submit-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 0.88fr) minmax(360px, 1.12fr);
+  grid-template-columns: minmax(0, 760px);
   gap: 18px;
   align-items: start;
+  justify-content: center;
 }
 
 .submit-layout .assignment-brief {
-  position: sticky;
-  top: 92px;
+  position: static;
   padding: clamp(22px, 4vw, 34px);
 }
 
@@ -2864,7 +2864,7 @@ select:focus-visible {
 }
 
 .submit-layout .homework-form {
-  grid-column: 2;
+  grid-column: 1;
 }
 
 .upload-field {
