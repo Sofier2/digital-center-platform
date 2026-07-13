@@ -15,7 +15,7 @@
       </div>
       <span class="eyebrow light">Особистий профіль</span>
       <h1>Аватарка і навчальна ціль</h1>
-      <p>Додай фото або картинку, щоб кабінет виглядав більш особисто. Ціль буде показуватися у верхньому блоці кабінету.</p>
+      <p>Додай фото або картинку, щоб кабінет виглядав більш особисто.</p>
     </header>
 
     <form class="profile-form upload-card" method="post" enctype="multipart/form-data">
@@ -23,7 +23,6 @@
       {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
 
       <label class="upload-field compact-field">
-        <span class="field-number"></span>
         <span class="field-copy"><strong>Аватарка</strong><small>Фото, ілюстрація або будь-який зрозумілий образ для профілю.</small></span>
         {{ form.avatar }}
         {% if form.avatar.errors %}<small class="form-error">{{ form.avatar.errors|striptags }}</small>{% endif %}

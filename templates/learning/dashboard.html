@@ -21,25 +21,7 @@
     <a class="secondary-btn profile-edit-link" href="{% url 'profile_settings' %}">Оновити профіль</a>
   </section>
 
-  <section class="student-quick-grid" aria-label="Короткий підсумок">
-    <article>
-      <span>{{ courses|length }}</span>
-      <p>активні курси</p>
-    </article>
-    <article>
-      <span>{{ lessons_done }}/{{ lessons_total }}</span>
-      <p>уроки в прогресі</p>
-    </article>
-    <article>
-      <span>{{ unknown_words_count }}</span>
-      <p>слова “не знаю”</p>
-    </article>
-    <article>
-      <span>{{ learning_words_count }}</span>
-      <p>слова “вчу”</p>
-    </article>
-  </section>
-
+  
   <section class="course-grid" aria-label="Курси">
     {% for course in courses %}
       <article class="course-card">

@@ -25,11 +25,10 @@
 
       <nav class="top-actions" aria-label="Навігація">
         {% if user.is_authenticated %}
-          <a href="{% url 'dashboard' %}">Кабінет</a>
           <a href="{% url 'profile_settings' %}">Профіль</a>
           {% if user.is_staff %}
             <a href="{% url 'platform_admin_dashboard' %}">Платформа</a>
-            <a href="{% url 'admin:index' %}">Django admin</a>
+            <a href="{% url 'admin:index' %}">Адмін-сторінка</a>
           {% endif %}
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
