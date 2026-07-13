@@ -2782,14 +2782,16 @@ select:focus-visible {
 
 .profile-page {
   display: grid;
-  gap: 18px;
+  gap: 22px;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .profile-hero {
   display: grid;
   justify-items: start;
-  gap: 12px;
-  padding: clamp(24px, 5vw, 44px);
+  gap: 10px;
+  padding: clamp(24px, 4vw, 36px);
 }
 
 .profile-avatar-preview {
@@ -2799,7 +2801,13 @@ select:focus-visible {
 }
 
 .profile-form {
-  max-width: 780px;
+  width: 100%;
+  max-width: none;
+  padding: 20px;
+}
+
+.profile-form .upload-field {
+  margin: 0;
 }
 
 .submit-layout {
