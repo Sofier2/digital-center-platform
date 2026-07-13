@@ -26,6 +26,9 @@
     {% for course in courses %}
       <article class="course-card">
         
+        <h2>{{ course.title }}</h2>
+       
+      
         <a class="primary-btn" href="{{ course.get_absolute_url }}">Відкрити курс</a>
       </article>
     {% empty %}
