@@ -15,6 +15,8 @@ class Profile(models.Model):
     child_name = models.CharField("ім'я дитини", max_length=120, blank=True)
     parent_name = models.CharField("ім'я одного з батьків", max_length=120, blank=True)
     birth_date = models.DateField("дата народження", blank=True, null=True)
+    avatar = models.ImageField("аватар", upload_to="avatars/", blank=True)
+    learning_goal = models.CharField("ціль навчання", max_length=180, blank=True)
     notes = models.TextField("нотатки", blank=True)
 
     class Meta:
@@ -118,6 +120,60 @@ class Material(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class VocabularySet(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="vocabulary_sets", verbose_name="урок")
+    title = models.CharField("назва списку", max_length=180)
+    description = models.TextField("пояснення", blank=True)
+    order = models.PositiveIntegerField("порядок", default=1)
+    is_published = models.BooleanField("опубліковано", default=True)
+
+    class Meta:
+        verbose_name = "список слів"
+        verbose_name_plural = "списки слів"
+        ordering = ["lesson", "order", "title"]
+
+    def __str__(self):
+        return self.title
+
+
+class VocabularyWord(models.Model):
+    vocabulary_set = models.ForeignKey(VocabularySet, on_delete=models.CASCADE, related_name="words", verbose_name="список")
+    word = models.CharField("слово або фраза", max_length=140)
+    translation = models.CharField("переклад / пояснення", max_length=220, blank=True)
+    example = models.TextField("приклад", blank=True)
+    order = models.PositiveIntegerField("порядок", default=1)
+
+    class Meta:
+        verbose_name = "слово"
+        verbose_name_plural = "слова"
+        ordering = ["vocabulary_set", "order", "word"]
+
+    def __str__(self):
+        return self.word
+
+
+class StudentWord(models.Model):
+    class Status(models.TextChoices):
+        UNKNOWN = "unknown", "Не знаю"
+        LEARNING = "learning", "Вчу"
+        KNOWN = "known", "Знаю"
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="word_progress", verbose_name="учень")
+    word = models.ForeignKey(VocabularyWord, on_delete=models.CASCADE, related_name="student_progress", verbose_name="слово")
+    status = models.CharField("статус", max_length=20, choices=Status.choices, default=Status.UNKNOWN)
+    created_at = models.DateTimeField("додано", auto_now_add=True)
+    updated_at = models.DateTimeField("оновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "слово учня"
+        verbose_name_plural = "слова учнів"
+        unique_together = ["student", "word"]
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"{self.student} - {self.word}: {self.get_status_display()}"
 
 
 class MaterialAttachment(models.Model):

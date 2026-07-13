@@ -3,10 +3,41 @@
 {% block title %}Мій кабінет{% endblock %}
 
 {% block content %}
-  <section class="page-hero">
-    <span class="eyebrow">Мій прогрес</span>
-    <h1>Привіт, {{ user.first_name|default:user.username }}</h1>
-    <p>Тут зібрані активні курси, уроки, матеріали й домашні завдання.</p>
+  <section class="student-home-hero">
+    <div class="student-identity">
+      <div class="student-avatar" aria-hidden="true">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="">
+        {% else %}
+          <span>{{ user.first_name|default:user.username|first|upper }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="eyebrow">Мій прогрес</span>
+        <h1>Привіт, {{ user.first_name|default:user.username }}</h1>
+        <p>{% if profile.learning_goal %}{{ profile.learning_goal }}{% else %}Тут зібрані активні курси, уроки, матеріали, слова й домашні завдання.{% endif %}</p>
+      </div>
+    </div>
+    <a class="secondary-btn profile-edit-link" href="{% url 'profile_settings' %}">Оновити профіль</a>
+  </section>
+
+  <section class="student-quick-grid" aria-label="Короткий підсумок">
+    <article>
+      <span>{{ courses|length }}</span>
+      <p>активні курси</p>
+    </article>
+    <article>
+      <span>{{ lessons_done }}/{{ lessons_total }}</span>
+      <p>уроки в прогресі</p>
+    </article>
+    <article>
+      <span>{{ unknown_words_count }}</span>
+      <p>слова “не знаю”</p>
+    </article>
+    <article>
+      <span>{{ learning_words_count }}</span>
+      <p>слова “вчу”</p>
+    </article>
   </section>
 
   <section class="course-grid" aria-label="Курси">
@@ -35,6 +66,27 @@
       </article>
     {% endfor %}
   </section>
+
+  {% if words_to_learn %}
+    <section class="word-cabinet">
+      <div class="section-title">
+        <span class="eyebrow light">Мій словник</span>
+        <h2>Слова, які треба повторити</h2>
+      </div>
+      <div class="word-review-grid">
+        {% for item in words_to_learn %}
+          <article class="word-review-card status-{{ item.status }}">
+            <div>
+              <strong>{{ item.word.word }}</strong>
+              {% if item.word.translation %}<span>{{ item.word.translation }}</span>{% endif %}
+            </div>
+            <small>{{ item.word.vocabulary_set.lesson.title }}</small>
+            <em>{{ item.get_status_display }}</em>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
 
   {% if submissions %}
     <section class="student-results">

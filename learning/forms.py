@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Submission
+from .models import Profile, Submission
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -40,6 +40,20 @@ class SubmissionForm(forms.ModelForm):
                 attrs={
                     "rows": 5,
                     "placeholder": "Коротко опиши виконану роботу або залиш посилання на GitHub/Google Drive.",
+                }
+            ),
+        }
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["avatar", "learning_goal"]
+        widgets = {
+            "learning_goal": forms.TextInput(
+                attrs={
+                    "placeholder": "Наприклад: підтягнути speaking або здати перший сайт",
+                    "maxlength": 180,
                 }
             ),
         }

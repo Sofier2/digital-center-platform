@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import QuizTakeForm, ReviewSubmissionForm, SubmissionForm
+from .forms import ProfileForm, QuizTakeForm, ReviewSubmissionForm, SubmissionForm
 from .models import (
     Assignment,
     Course,
@@ -14,11 +14,14 @@ from .models import (
     Lesson,
     LessonProgress,
     ParentChild,
+    Profile,
     Quiz,
     QuizAnswer,
     QuizAttempt,
+    StudentWord,
     Submission,
     SubmissionAttachment,
+    VocabularyWord,
 )
 
 
@@ -50,6 +53,20 @@ def dashboard(request):
     enrollments = request.user.enrollments.select_related("course").filter(is_active=True)
     courses = Course.objects.filter(enrollments__student=request.user, enrollments__is_active=True, is_published=True).distinct()
     submissions = request.user.submissions.select_related("assignment", "assignment__lesson").order_by("-submitted_at")[:6]
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    words_to_learn = (
+        request.user.word_progress.select_related(
+            "word",
+            "word__vocabulary_set",
+            "word__vocabulary_set__lesson",
+            "word__vocabulary_set__lesson__module",
+            "word__vocabulary_set__lesson__module__course",
+        )
+        .filter(status__in=[StudentWord.Status.UNKNOWN, StudentWord.Status.LEARNING])
+        .order_by("-updated_at")[:8]
+    )
+    lessons_total = Lesson.objects.filter(module__course__in=courses).distinct().count()
+    lessons_done = LessonProgress.objects.filter(student=request.user, is_done=True, lesson__module__course__in=courses).distinct().count()
 
     return render(
         request,
@@ -58,8 +75,28 @@ def dashboard(request):
             "courses": courses,
             "enrollments": enrollments,
             "submissions": submissions,
+            "profile": profile,
+            "words_to_learn": words_to_learn,
+            "unknown_words_count": request.user.word_progress.filter(status=StudentWord.Status.UNKNOWN).count(),
+            "learning_words_count": request.user.word_progress.filter(status=StudentWord.Status.LEARNING).count(),
+            "lessons_total": lessons_total,
+            "lessons_done": lessons_done,
         },
     )
+
+
+@login_required
+def profile_settings(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Профіль оновлено.")
+            return redirect("dashboard")
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, "learning/profile_settings.html", {"form": form, "profile": profile})
 
 
 @login_required
@@ -111,7 +148,7 @@ def course_detail(request, pk):
 @login_required
 def lesson_detail(request, pk):
     lesson = get_object_or_404(
-        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "assignments", "quizzes"),
+        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "vocabulary_sets__words", "assignments", "quizzes"),
         pk=pk,
         is_available=True,
     )
@@ -124,7 +161,41 @@ def lesson_detail(request, pk):
     quiz_attempts = {}
     for item in QuizAttempt.objects.filter(student=request.user, quiz__lesson=lesson).order_by("quiz_id", "-completed_at"):
         quiz_attempts.setdefault(item.quiz_id, item)
-    return render(request, "learning/lesson_detail.html", {"lesson": lesson, "submissions": submissions, "quiz_attempts": quiz_attempts})
+    word_statuses = {
+        item.word_id: item.status
+        for item in StudentWord.objects.filter(student=request.user, word__vocabulary_set__lesson=lesson)
+    }
+    return render(
+        request,
+        "learning/lesson_detail.html",
+        {
+            "lesson": lesson,
+            "submissions": submissions,
+            "quiz_attempts": quiz_attempts,
+            "word_statuses": word_statuses,
+        },
+    )
+
+
+@login_required
+def update_word_status(request, pk):
+    word = get_object_or_404(
+        VocabularyWord.objects.select_related("vocabulary_set", "vocabulary_set__lesson", "vocabulary_set__lesson__module", "vocabulary_set__lesson__module__course"),
+        pk=pk,
+    )
+    lesson = word.vocabulary_set.lesson
+    if not user_has_course_access(request.user, lesson.module.course):
+        return redirect("dashboard")
+    if request.method == "POST":
+        status = request.POST.get("status")
+        if status in StudentWord.Status.values:
+            StudentWord.objects.update_or_create(
+                student=request.user,
+                word=word,
+                defaults={"status": status},
+            )
+            messages.success(request, "Слово збережено у твоєму словнику.")
+    return redirect(f"{lesson.get_absolute_url()}#words")
 
 
 @login_required

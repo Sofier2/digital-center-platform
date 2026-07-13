@@ -4,24 +4,31 @@
 
 {% block content %}
   <section class="homework-submit-page">
-    <header class="assignment-brief">
-      <a class="back-link" href="{{ assignment.lesson.get_absolute_url }}">Назад до уроку</a>
-      <span class="eyebrow light">Домашнє завдання · {{ assignment.lesson.module.course.title }}</span>
-      <h1>{{ assignment.title }}</h1>
-      <div class="assignment-task">{{ assignment.task|linebreaks }}</div>
-      <div class="task-meta">
-        {% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}
-        <span>Максимум {{ assignment.max_points }} балів</span>
-      </div>
-      {% if submission and submission.points != None %}
-        <div class="submission-status is-graded">
-          <strong>Оцінка: {{ submission.points }}/{{ assignment.max_points }}</strong>
-          {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+    <div class="submit-layout">
+      <aside class="assignment-brief">
+        <a class="back-link" href="{{ assignment.lesson.get_absolute_url }}">Назад до уроку</a>
+        <span class="eyebrow light">Домашнє завдання · {{ assignment.lesson.module.course.title }}</span>
+        <h1>{{ assignment.title }}</h1>
+        <div class="assignment-task">{{ assignment.task|linebreaks }}</div>
+        <div class="task-meta">
+          {% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}
+          <span>Максимум {{ assignment.max_points }} балів</span>
         </div>
-      {% elif submission %}
-        <div class="submission-status is-waiting"><strong>Роботу вже надіслано і вона очікує перевірки.</strong></div>
-      {% endif %}
-    </header>
+        {% if submission and submission.points != None %}
+          <div class="submission-status is-graded">
+            <strong>Оцінка: {{ submission.points }}/{{ assignment.max_points }}</strong>
+            {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+          </div>
+        {% elif submission %}
+          <div class="submission-status is-waiting"><strong>Роботу вже надіслано і вона очікує перевірки.</strong></div>
+        {% endif %}
+      </aside>
+
+      <div class="submission-guide" aria-label="Порядок здачі">
+        <div><span>1</span><strong>Опиши роботу</strong><small>Коротко що зроблено і де дивитися результат.</small></div>
+        <div><span>2</span><strong>Додай докази</strong><small>Файли, скріни, відео або посилання.</small></div>
+        <div><span>3</span><strong>Надішли</strong><small>Після відправки викладач побачить усе в кабінеті.</small></div>
+      </div>
 
     <form class="upload-card homework-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
@@ -82,5 +89,6 @@
         {% if submission %}Зберегти оновлену роботу{% else %}Надіслати домашню роботу{% endif %}
       </button>
     </form>
+    </div>
   </section>
 {% endblock %}

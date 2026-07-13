@@ -20,6 +20,9 @@ from .models import (
     QuizQuestion,
     Submission,
     SubmissionAttachment,
+    StudentWord,
+    VocabularySet,
+    VocabularyWord,
 )
 
 
@@ -48,9 +51,9 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "child_name", "parent_name", "phone")
+    list_display = ("user", "role", "child_name", "parent_name", "phone", "learning_goal")
     list_filter = ("role",)
-    search_fields = ("user__username", "user__first_name", "user__last_name", "child_name", "parent_name", "phone")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "child_name", "parent_name", "phone", "learning_goal")
 
 
 @admin.register(ParentChild)
@@ -97,6 +100,12 @@ class MaterialAttachmentInline(admin.TabularInline):
     fields = ("title", "file", "external_url", "note", "order")
 
 
+class VocabularyWordInline(admin.TabularInline):
+    model = VocabularyWord
+    extra = 3
+    fields = ("word", "translation", "example", "order")
+
+
 class AssignmentInline(admin.TabularInline):
     model = Assignment
     extra = 1
@@ -108,12 +117,18 @@ class QuizInline(admin.TabularInline):
     fields = ("title", "max_points", "passing_percent", "is_published", "allow_retakes", "order")
 
 
+class VocabularySetInline(admin.TabularInline):
+    model = VocabularySet
+    extra = 1
+    fields = ("title", "description", "order", "is_published")
+
+
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("title", "module", "order", "is_available")
     list_filter = ("is_available", "module__course")
     search_fields = ("title", "summary", "content")
-    inlines = [MaterialInline, AssignmentInline, QuizInline]
+    inlines = [MaterialInline, VocabularySetInline, AssignmentInline, QuizInline]
 
 
 @admin.register(Material)
@@ -121,6 +136,29 @@ class MaterialAdmin(admin.ModelAdmin):
     list_display = ("title", "lesson", "external_url")
     search_fields = ("title", "description")
     inlines = [MaterialAttachmentInline]
+
+
+@admin.register(VocabularySet)
+class VocabularySetAdmin(admin.ModelAdmin):
+    list_display = ("title", "lesson", "order", "is_published")
+    list_filter = ("is_published", "lesson__module__course")
+    search_fields = ("title", "description", "lesson__title")
+    inlines = [VocabularyWordInline]
+
+
+@admin.register(VocabularyWord)
+class VocabularyWordAdmin(admin.ModelAdmin):
+    list_display = ("word", "translation", "vocabulary_set", "order")
+    list_filter = ("vocabulary_set__lesson__module__course",)
+    search_fields = ("word", "translation", "example", "vocabulary_set__title")
+
+
+@admin.register(StudentWord)
+class StudentWordAdmin(admin.ModelAdmin):
+    list_display = ("student", "word", "status", "updated_at")
+    list_filter = ("status", "word__vocabulary_set__lesson__module__course")
+    search_fields = ("student__username", "student__first_name", "student__last_name", "word__word", "word__translation")
+    autocomplete_fields = ("student", "word")
 
 
 @admin.register(Enrollment)

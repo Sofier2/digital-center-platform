@@ -13,8 +13,9 @@
       <nav class="lesson-step-nav" aria-label="Кроки уроку">
         <a href="#topic"><span>1</span>Тема</a>
         <a href="#materials"><span>2</span>Матеріали</a>
-        <a href="#homework"><span>3</span>Домашнє</a>
-        <a href="#tests"><span>4</span>Тест</a>
+        <a href="#words"><span>3</span>Слова</a>
+        <a href="#homework"><span>4</span>Домашнє</a>
+        <a href="#tests"><span>5</span>Тест</a>
       </nav>
     </header>
 
@@ -75,8 +76,55 @@
         </div>
       </section>
 
-      <section class="lesson-step homework-step" id="homework">
+      <section class="lesson-step words-step" id="words">
         <div class="step-rail"><span>03</span></div>
+        <div class="step-content">
+          <header class="step-heading">
+            <span>Словник уроку</span>
+            <h2>Познач слова, які треба повторити</h2>
+            <p>Вибери статус для кожного слова. Усі слова “не знаю” і “вчу” зʼявляться у твоєму кабінеті для повторення.</p>
+          </header>
+          <div class="vocabulary-stack">
+            {% for vocabulary_set in lesson.vocabulary_sets.all %}
+              {% if vocabulary_set.is_published %}
+                <article class="learning-item vocabulary-set-card">
+                  <div class="item-heading">
+                    <span class="item-kind word-kind">Список {{ forloop.counter }}</span>
+                    <h3>{{ vocabulary_set.title }}</h3>
+                    {% if vocabulary_set.description %}<p>{{ vocabulary_set.description }}</p>{% endif %}
+                  </div>
+                  <div class="vocabulary-grid">
+                    {% for word in vocabulary_set.words.all %}
+                      {% with status=word_statuses|dict_get:word.id %}
+                        <div class="word-card status-{{ status|default:'new' }}">
+                          <div class="word-copy">
+                            <strong>{{ word.word }}</strong>
+                            {% if word.translation %}<span>{{ word.translation }}</span>{% endif %}
+                            {% if word.example %}<p>{{ word.example }}</p>{% endif %}
+                          </div>
+                          <form class="word-actions" method="post" action="{% url 'update_word_status' word.id %}">
+                            {% csrf_token %}
+                            <button class="{% if status == 'unknown' %}is-active{% endif %}" name="status" value="unknown" type="submit">Не знаю</button>
+                            <button class="{% if status == 'learning' %}is-active{% endif %}" name="status" value="learning" type="submit">Вчу</button>
+                            <button class="{% if status == 'known' %}is-active{% endif %}" name="status" value="known" type="submit">Знаю</button>
+                          </form>
+                        </div>
+                      {% endwith %}
+                    {% empty %}
+                      <div class="step-empty">У цьому списку поки немає слів.</div>
+                    {% endfor %}
+                  </div>
+                </article>
+              {% endif %}
+            {% empty %}
+              <div class="step-empty">Список слів для цього уроку ще не доданий.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="lesson-step homework-step" id="homework">
+        <div class="step-rail"><span>04</span></div>
         <div class="step-content">
           <header class="step-heading">
             <span>Головне завдання</span>
@@ -119,7 +167,7 @@
       </section>
 
       <section class="lesson-step" id="tests">
-        <div class="step-rail"><span>04</span></div>
+        <div class="step-rail"><span>05</span></div>
         <div class="step-content">
           <header class="step-heading">
             <span>Перевір себе</span>
