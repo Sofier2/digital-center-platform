@@ -17,8 +17,7 @@
           <strong>{{ course.students_total }} учнів</strong>
         </div>
         <h2>{{ course.title }}</h2>
-        <p>{{ course.short_description }}</p>
-       
+        
         <a class="primary-btn" href="{{ course.get_absolute_url }}">Переглянути як курс</a>
       </article>
     {% endfor %}
