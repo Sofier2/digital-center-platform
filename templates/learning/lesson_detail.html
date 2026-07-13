@@ -11,204 +11,41 @@
       <h1>{{ lesson.title }}</h1>
       {% if lesson.summary %}<p>{{ lesson.summary }}</p>{% endif %}
       <nav class="lesson-step-nav" aria-label="Кроки уроку">
-        <a href="#topic"><span>1</span>Тема</a>
-        <a href="#materials"><span>2</span>Матеріали</a>
-        <a href="#words"><span>3</span>Слова</a>
-        <a href="#homework"><span>4</span>Домашнє</a>
-        <a href="#tests"><span>5</span>Тест</a>
+        {% for step in steps %}
+          <a href="#{{ step.kind }}"><span>{{ forloop.counter }}</span>{{ step.get_kind_display|default:step.kind }}</a>
+        {% endfor %}
       </nav>
     </header>
 
     <div class="lesson-flow">
-      <section class="lesson-step" id="topic">
-        <div class="step-rail"><span>01</span></div>
-        <div class="step-content">
-          <header class="step-heading">
-            <span>Спочатку</span>
-            <h2>Опрацюй тему уроку</h2>
-            <p>Прочитай пояснення і переглянь відео, якщо воно додане.</p>
-          </header>
-          {% if lesson.video_url %}
-            <a class="video-link lesson-action" href="{{ lesson.video_url }}" target="_blank" rel="noreferrer">Відкрити відео уроку</a>
-          {% endif %}
-          <div class="lesson-content">
-            {% if lesson.content %}{{ lesson.content|linebreaks }}{% else %}<p class="muted">Текст уроку ще не доданий.</p>{% endif %}
-          </div>
-        </div>
-      </section>
+      {% for step in steps %}
+        <section class="lesson-step {% if step.kind == 'vocabulary' %}words-step{% elif step.kind == 'homework' %}homework-step{% endif %}" id="{{ step.kind }}">
+          <div class="step-rail"><span>0{{ forloop.counter }}</span></div>
+          <div class="step-content">
+            {% if step.kind == 'topic' %}
+              <header class="step-heading"><span>Тема</span><h2>Опрацюй тему уроку</h2><p>Прочитай пояснення та переглянь відео, якщо воно додане.</p></header>
+              {% if lesson.video_url %}<a class="video-link lesson-action" href="{{ lesson.video_url }}" target="_blank" rel="noreferrer">Відкрити відео уроку</a>{% endif %}
+              <div class="lesson-content">{% if lesson.content %}{{ lesson.content|linebreaks }}{% else %}<p class="muted">Текст уроку ще не доданий.</p>{% endif %}</div>
 
-      <section class="lesson-step" id="materials">
-        <div class="step-rail"><span>02</span></div>
-        <div class="step-content">
-          <header class="step-heading">
-            <span>Під рукою</span>
-            <h2>Матеріали до уроку</h2>
-            <p>Відкрий файли, скріни та корисні посилання перед виконанням завдання.</p>
-          </header>
-          <div class="material-stack">
-            {% for material in lesson.materials.all %}
-              <article class="learning-item material-flow-item">
-                <div class="item-heading">
-                  <span class="item-kind">Матеріал {{ forloop.counter }}</span>
-                  <h3>{{ material.title }}</h3>
-                  {% if material.description %}<p>{{ material.description }}</p>{% endif %}
-                </div>
-                {% if material.file %}
-                  {% include "learning/partials/file_preview.html" with file=material.file title="Відкрити основний файл" %}
-                {% endif %}
-                {% if material.external_url %}
-                  <a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Відкрити посилання</a>
-                {% endif %}
-                {% for attachment in material.attachments.all %}
-                  {% if attachment.file %}
-                    {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
-                  {% endif %}
-                  {% if attachment.external_url %}
-                    <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Відкрити посилання" }}</a>
-                  {% endif %}
-                  {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
-                {% endfor %}
-              </article>
-            {% empty %}
-              <div class="step-empty">Додаткових матеріалів для цього уроку немає.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </section>
+            {% elif step.kind == 'materials' %}
+              <header class="step-heading"><span>Під рукою</span><h2>Матеріали до уроку</h2><p>Відкрий файли та корисні посилання перед виконанням завдання.</p></header>
+              <div class="material-stack">{% for material in lesson.materials.all %}<article class="learning-item material-flow-item"><div class="item-heading"><span class="item-kind">Матеріал {{ forloop.counter }}</span><h3>{{ material.title }}</h3>{% if material.description %}<p>{{ material.description }}</p>{% endif %}</div>{% if material.file %}{% include "learning/partials/file_preview.html" with file=material.file title="Відкрити файл" %}{% endif %}{% if material.external_url %}<a class="file-link" href="{{ material.external_url }}" target="_blank" rel="noreferrer">Відкрити посилання</a>{% endif %}{% for attachment in material.attachments.all %}{% if attachment.file %}{% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}{% endif %}{% if attachment.external_url %}<a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Відкрити посилання" }}</a>{% endif %}{% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}{% endfor %}</article>{% empty %}<div class="step-empty">Матеріалів для цього уроку ще немає.</div>{% endfor %}</div>
 
-      <section class="lesson-step words-step" id="words">
-        <div class="step-rail"><span>03</span></div>
-        <div class="step-content">
-          <header class="step-heading">
-            <span>Словник уроку</span>
-            <h2>Познач слова, які треба повторити</h2>
-            <p>Вибери статус для кожного слова. Усі слова “не знаю” і “вчу” зʼявляться у твоєму кабінеті для повторення.</p>
-          </header>
-          <div class="vocabulary-stack">
-            {% for vocabulary_set in lesson.vocabulary_sets.all %}
-              {% if vocabulary_set.is_published %}
-                <article class="learning-item vocabulary-set-card">
-                  <div class="item-heading">
-                    <span class="item-kind word-kind">Список {{ forloop.counter }}</span>
-                    <h3>{{ vocabulary_set.title }}</h3>
-                    {% if vocabulary_set.description %}<p>{{ vocabulary_set.description }}</p>{% endif %}
-                  </div>
-                  <div class="vocabulary-grid">
-                    {% for word in vocabulary_set.words.all %}
-                      {% with status=word_statuses|dict_get:word.id %}
-                        <div class="word-card status-{{ status|default:'new' }}">
-                          <div class="word-copy">
-                            <strong>{{ word.word }}</strong>
-                            {% if word.translation %}<span>{{ word.translation }}</span>{% endif %}
-                            {% if word.example %}<p>{{ word.example }}</p>{% endif %}
-                          </div>
-                          <form class="word-actions" method="post" action="{% url 'update_word_status' word.id %}">
-                            {% csrf_token %}
-                            <button class="{% if status == 'unknown' %}is-active{% endif %}" name="status" value="unknown" type="submit">Не знаю</button>
-                            <button class="{% if status == 'learning' %}is-active{% endif %}" name="status" value="learning" type="submit">Вчу</button>
-                            <button class="{% if status == 'known' %}is-active{% endif %}" name="status" value="known" type="submit">Знаю</button>
-                          </form>
-                        </div>
-                      {% endwith %}
-                    {% empty %}
-                      <div class="step-empty">У цьому списку поки немає слів.</div>
-                    {% endfor %}
-                  </div>
-                </article>
-              {% endif %}
-            {% empty %}
-              <div class="step-empty">Список слів для цього уроку ще не доданий.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </section>
+            {% elif step.kind == 'vocabulary' %}
+              <header class="step-heading"><span>Словник уроку</span><h2>Познач слова, які треба повторити</h2><p>Обери статус для кожного слова — він збережеться у твоєму кабінеті.</p></header>
+              <div class="vocabulary-stack">{% for vocabulary_set in lesson.vocabulary_sets.all %}{% if vocabulary_set.is_published %}<article class="learning-item vocabulary-set-card"><div class="item-heading"><span class="item-kind word-kind">Список {{ forloop.counter }}</span><h3>{{ vocabulary_set.title }}</h3>{% if vocabulary_set.description %}<p>{{ vocabulary_set.description }}</p>{% endif %}</div><div class="vocabulary-grid">{% for word in vocabulary_set.words.all %}{% with status=word_statuses|dict_get:word.id %}<div class="word-card status-{{ status|default:'new' }}"><div class="word-copy"><strong>{{ word.word }}</strong>{% if word.translation %}<span>{{ word.translation }}</span>{% endif %}{% if word.example %}<p>{{ word.example }}</p>{% endif %}</div><form class="word-actions" method="post" action="{% url 'update_word_status' word.id %}">{% csrf_token %}<button class="{% if status == 'unknown' %}is-active{% endif %}" name="status" value="unknown" type="submit">Не знаю</button><button class="{% if status == 'learning' %}is-active{% endif %}" name="status" value="learning" type="submit">Вчу</button><button class="{% if status == 'known' %}is-active{% endif %}" name="status" value="known" type="submit">Знаю</button></form></div>{% endwith %}{% empty %}<div class="step-empty">У цьому списку поки немає слів.</div>{% endfor %}</div></article>{% endif %}{% empty %}<div class="step-empty">Список слів для цього уроку ще не доданий.</div>{% endfor %}</div>
 
-      <section class="lesson-step homework-step" id="homework">
-        <div class="step-rail"><span>04</span></div>
-        <div class="step-content">
-          <header class="step-heading">
-            <span>Головне завдання</span>
-            <h2>Виконай і завантаж домашню роботу</h2>
-            <p>Уважно прочитай умову. Кнопка завантаження є в кожному завданні нижче.</p>
-          </header>
-          <div class="homework-stack">
-            {% for assignment in lesson.assignments.all %}
-              {% with submission=submissions|dict_get:assignment.id %}
-                <article class="learning-item homework-flow-item">
-                  <div class="item-heading">
-                    <span class="item-kind homework-kind">Домашнє завдання {{ forloop.counter }}</span>
-                    <h3>{{ assignment.title }}</h3>
-                  </div>
-                  <div class="task-copy">{{ assignment.task|linebreaks }}</div>
-                  <div class="task-meta">
-                    {% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}
-                    <span>Максимум {{ assignment.max_points }} балів</span>
-                  </div>
-                  {% if submission %}
-                    <div class="submission-status {% if submission.points != None %}is-graded{% else %}is-waiting{% endif %}">
-                      {% if submission.points != None %}
-                        <strong>Оцінено: {{ submission.points }}/{{ assignment.max_points }}</strong>
-                        {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
-                      {% else %}
-                        <strong>Роботу завантажено · очікує перевірки</strong>
-                      {% endif %}
-                    </div>
-                    <a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Оновити завантажену роботу</a>
-                  {% else %}
-                    <a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Завантажити домашню роботу</a>
-                  {% endif %}
-                </article>
-              {% endwith %}
-            {% empty %}
-              <div class="step-empty">Для цього уроку домашнього завдання немає.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </section>
+            {% elif step.kind == 'homework' %}
+              <header class="step-heading"><span>Головне завдання</span><h2>Виконай і завантаж домашню роботу</h2><p>Уважно прочитай умову та додай відповідь або файл.</p></header>
+              <div class="homework-stack">{% for assignment in lesson.assignments.all %}{% with submission=submissions|dict_get:assignment.id %}<article class="learning-item homework-flow-item"><div class="item-heading"><span class="item-kind homework-kind">Домашнє завдання {{ forloop.counter }}</span><h3>{{ assignment.title }}</h3></div><div class="task-copy">{{ assignment.task|linebreaks }}</div><div class="task-meta">{% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}<span>Максимум {{ assignment.max_points }} балів</span></div>{% if submission %}<div class="submission-status {% if submission.points != None %}is-graded{% else %}is-waiting{% endif %}">{% if submission.points != None %}<strong>Оцінено: {{ submission.points }}/{{ assignment.max_points }}</strong>{% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}{% else %}<strong>Роботу завантажено · очікує перевірки</strong>{% endif %}</div><a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Оновити роботу</a>{% else %}<a class="primary-btn homework-upload" href="{% url 'submit_assignment' assignment.id %}">Завантажити домашню роботу</a>{% endif %}</article>{% endwith %}{% empty %}<div class="step-empty">Для цього уроку домашнього завдання немає.</div>{% endfor %}</div>
 
-      <section class="lesson-step" id="tests">
-        <div class="step-rail"><span>05</span></div>
-        <div class="step-content">
-          <header class="step-heading">
-            <span>Перевір себе</span>
-            <h2>Пройди тест</h2>
-            <p>Тест допоможе закріпити тему і одразу покаже результат.</p>
-          </header>
-          <div class="quiz-stack">
-            {% for quiz in lesson.quizzes.all %}
-              {% if quiz.is_published %}
-                {% with attempt=quiz_attempts|dict_get:quiz.id %}
-                  <article class="learning-item quiz-flow-item">
-                    <div class="item-heading">
-                      <span class="item-kind quiz-kind">Тест</span>
-                      <h3>{{ quiz.title }}</h3>
-                      {% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}
-                    </div>
-                    <div class="task-meta">
-                      <span>{{ quiz.max_points }} балів</span>
-                      <span>Прохідний результат {{ quiz.passing_percent }}%</span>
-                    </div>
-                    {% if attempt %}
-                      <div class="quiz-result-line {% if attempt.is_passed %}is-passed{% endif %}">
-                        <strong>{{ attempt.score_percent }}%</strong>
-                        <span>{{ attempt.points }}/{{ quiz.max_points }} балів</span>
-                      </div>
-                      <div class="item-actions">
-                        <a class="primary-btn" href="{% url 'quiz_result' attempt.id %}">Переглянути результат</a>
-                        {% if quiz.allow_retakes %}<a class="secondary-btn" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>{% endif %}
-                      </div>
-                    {% else %}
-                      <a class="primary-btn homework-upload" href="{{ quiz.get_absolute_url }}">Почати тест</a>
-                    {% endif %}
-                  </article>
-                {% endwith %}
-              {% endif %}
-            {% empty %}
-              <div class="step-empty">Тест для цього уроку ще не доданий.</div>
-            {% endfor %}
+            {% elif step.kind == 'quiz' %}
+              <header class="step-heading"><span>Перевір себе</span><h2>Пройди тест</h2><p>Тест допоможе закріпити тему й одразу покаже результат.</p></header>
+              <div class="quiz-stack">{% for quiz in lesson.quizzes.all %}{% if quiz.is_published %}{% with attempt=quiz_attempts|dict_get:quiz.id %}<article class="learning-item quiz-flow-item"><div class="item-heading"><span class="item-kind quiz-kind">Тест</span><h3>{{ quiz.title }}</h3>{% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}</div><div class="task-meta"><span>{{ quiz.max_points }} балів</span><span>Прохідний результат {{ quiz.passing_percent }}%</span></div>{% if attempt %}<div class="quiz-result-line {% if attempt.is_passed %}is-passed{% endif %}"><strong>{{ attempt.score_percent }}%</strong><span>{{ attempt.points }}/{{ quiz.max_points }} балів</span></div><div class="item-actions"><a class="primary-btn" href="{% url 'quiz_result' attempt.id %}">Переглянути результат</a>{% if quiz.allow_retakes %}<a class="secondary-btn" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>{% endif %}</div>{% else %}<a class="primary-btn homework-upload" href="{{ quiz.get_absolute_url }}">Почати тест</a>{% endif %}</article>{% endwith %}{% endif %}{% empty %}<div class="step-empty">Тест для цього уроку ще не доданий.</div>{% endfor %}</div>
+            {% endif %}
           </div>
-        </div>
-      </section>
+        </section>
+      {% endfor %}
     </div>
   </section>
 {% endblock %}

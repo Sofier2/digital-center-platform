@@ -107,6 +107,30 @@ class Lesson(models.Model):
         return reverse("lesson_detail", kwargs={"pk": self.pk})
 
 
+class LessonStep(models.Model):
+    class Kind(models.TextChoices):
+        TOPIC = "topic", "Тема уроку"
+        MATERIALS = "materials", "Матеріали"
+        VOCABULARY = "vocabulary", "Слова"
+        HOMEWORK = "homework", "Домашнє завдання"
+        QUIZ = "quiz", "Тест"
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="steps", verbose_name="урок")
+    kind = models.CharField("тип кроку", max_length=20, choices=Kind.choices)
+    order = models.PositiveIntegerField("порядок", default=1)
+
+    class Meta:
+        verbose_name = "крок уроку"
+        verbose_name_plural = "кроки уроку"
+        ordering = ["lesson", "order", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["lesson", "kind"], name="unique_lesson_step_kind"),
+        ]
+
+    def __str__(self):
+        return f"{self.lesson}: {self.get_kind_display()}"
+
+
 class Material(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="materials", verbose_name="урок")
     title = models.CharField("назва", max_length=180)

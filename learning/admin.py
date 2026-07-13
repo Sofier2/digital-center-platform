@@ -7,6 +7,7 @@ from .models import (
     Course,
     Enrollment,
     Lesson,
+    LessonStep,
     LessonProgress,
     Material,
     MaterialAttachment,
@@ -94,6 +95,14 @@ class MaterialInline(admin.TabularInline):
     extra = 1
 
 
+class LessonStepInline(admin.TabularInline):
+    model = LessonStep
+    extra = 0
+    fields = ("kind", "order")
+    verbose_name = "крок уроку"
+    verbose_name_plural = "Кроки уроку (додайте тільки ті, які мають бачити учні)"
+
+
 class MaterialAttachmentInline(admin.TabularInline):
     model = MaterialAttachment
     extra = 1
@@ -128,7 +137,7 @@ class LessonAdmin(admin.ModelAdmin):
     list_display = ("title", "module", "order", "is_available")
     list_filter = ("is_available", "module__course")
     search_fields = ("title", "summary", "content")
-    inlines = [MaterialInline, VocabularySetInline, AssignmentInline, QuizInline]
+    inlines = [LessonStepInline, MaterialInline, VocabularySetInline, AssignmentInline, QuizInline]
 
 
 @admin.register(Material)

@@ -148,7 +148,7 @@ def course_detail(request, pk):
 @login_required
 def lesson_detail(request, pk):
     lesson = get_object_or_404(
-        Lesson.objects.select_related("module", "module__course").prefetch_related("materials__attachments", "vocabulary_sets__words", "assignments", "quizzes"),
+        Lesson.objects.select_related("module", "module__course").prefetch_related("steps", "materials__attachments", "vocabulary_sets__words", "assignments", "quizzes"),
         pk=pk,
         is_available=True,
     )
@@ -165,6 +165,16 @@ def lesson_detail(request, pk):
         item.word_id: item.status
         for item in StudentWord.objects.filter(student=request.user, word__vocabulary_set__lesson=lesson)
     }
+    steps = list(lesson.steps.all())
+    if not steps:
+        # Lessons created before the step constructor keep their familiar full layout.
+        steps = [
+            {"kind": "topic", "order": 1},
+            {"kind": "materials", "order": 2},
+            {"kind": "vocabulary", "order": 3},
+            {"kind": "homework", "order": 4},
+            {"kind": "quiz", "order": 5},
+        ]
     return render(
         request,
         "learning/lesson_detail.html",
@@ -173,6 +183,7 @@ def lesson_detail(request, pk):
             "submissions": submissions,
             "quiz_attempts": quiz_attempts,
             "word_statuses": word_statuses,
+            "steps": steps,
         },
     )
 
