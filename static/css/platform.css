@@ -2810,6 +2810,42 @@ select:focus-visible {
   margin: 0;
 }
 
+.code-snippet {
+  position: relative;
+  margin-top: 16px;
+  overflow: hidden;
+  background: #15103d;
+  border: 1px solid rgba(109, 53, 242, 0.42);
+  border-radius: 16px;
+}
+
+.code-snippet pre {
+  margin: 0;
+  padding: 58px 20px 20px;
+  overflow-x: auto;
+  color: #f3f0ff;
+  font: 600 14px/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  white-space: pre;
+}
+
+.copy-code-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-height: 34px;
+  padding: 7px 12px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2458f2, #7533f3);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font: 800 13px/1 "Manrope", sans-serif;
+}
+
+.copy-code-button:hover {
+  filter: brightness(1.1);
+}
+
 .submit-layout {
   display: grid;
   grid-template-columns: minmax(0, 760px);

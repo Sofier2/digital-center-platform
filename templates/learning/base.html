@@ -49,5 +49,25 @@
       {% endif %}
       {% block content %}{% endblock %}
     </main>
+    <script>
+      document.querySelectorAll("[data-copy-code]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const code = button.parentElement.querySelector("code").innerText;
+          try {
+            await navigator.clipboard.writeText(code);
+            button.textContent = "Скопійовано!";
+          } catch (error) {
+            const area = document.createElement("textarea");
+            area.value = code;
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand("copy");
+            area.remove();
+            button.textContent = "Скопійовано!";
+          }
+          window.setTimeout(() => { button.textContent = "Скопіювати код"; }, 1800);
+        });
+      });
+    </script>
   </body>
 </html>

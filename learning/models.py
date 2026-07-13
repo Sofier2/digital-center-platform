@@ -137,6 +137,7 @@ class Material(models.Model):
     file = models.FileField("файл", upload_to="materials/", blank=True)
     external_url = models.URLField("посилання", blank=True)
     description = models.TextField("опис", blank=True)
+    is_code = models.BooleanField("це код — показати кнопку «Скопіювати код»", default=False)
 
     class Meta:
         verbose_name = "матеріал"
@@ -144,6 +145,10 @@ class Material(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def should_render_as_code(self):
+        return self.is_code or self.title.strip().lower() in {"код", "code", "program code"}
 
 
 class VocabularySet(models.Model):

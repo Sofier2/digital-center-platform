@@ -93,6 +93,7 @@ class ModuleAdmin(admin.ModelAdmin):
 class MaterialInline(admin.TabularInline):
     model = Material
     extra = 1
+    fields = ("title", "description", "is_code", "file", "external_url")
 
 
 class LessonStepInline(admin.TabularInline):
@@ -144,6 +145,7 @@ class LessonAdmin(admin.ModelAdmin):
 class MaterialAdmin(admin.ModelAdmin):
     list_display = ("title", "lesson", "external_url")
     search_fields = ("title", "description")
+    fields = ("lesson", "title", "description", "is_code", "file", "external_url")
     inlines = [MaterialAttachmentInline]
 
 
