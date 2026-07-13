@@ -25,20 +25,7 @@
   <section class="course-grid" aria-label="Курси">
     {% for course in courses %}
       <article class="course-card">
-        <div class="course-top">
-          <span>{{ course.get_direction_display }}</span>
-          <strong>{{ course.age_range }}</strong>
-        </div>
-        <h2>{{ course.title }}</h2>
-        <p>{{ course.short_description }}</p>
-        <ul class="meta-list">
-          {% if course.level %}<li>{{ course.level }}</li>{% endif %}
-          <li>{{ course.final_project }}</li>
-        </ul>
-        <div class="course-schedule">
-          <span>Розклад</span>
-          <strong>{{ course.schedule }}</strong>
-        </div>
+        
         <a class="primary-btn" href="{{ course.get_absolute_url }}">Відкрити курс</a>
       </article>
     {% empty %}

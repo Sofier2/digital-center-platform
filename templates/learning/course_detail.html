@@ -7,7 +7,13 @@
   <section class="page-hero compact course-hero">
     <span class="eyebrow">{{ course.get_direction_display }}</span>
     <h1>{{ course.title }}</h1>
-    
+    <p>{{ course.short_description }}</p>
+    <ul class="hero-meta">
+      <li>{{ course.age_range }}</li>
+      {% if course.level %}<li>{{ course.level }}</li>{% endif %}
+      <li>{{ course.schedule }}</li>
+      <li>{{ course.final_project }}</li>
+    </ul>
   </section>
 
   <section class="learning-path" aria-label="Навчальний маршрут курсу">
