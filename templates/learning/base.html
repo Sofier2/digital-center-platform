@@ -27,7 +27,7 @@
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard' %}">Платформа</a>
           <a href="{% url 'profile_settings' %}">Профіль</a>
-          <a href="{% url 'schedule' %}">Schedule</a>
+          <a href="{% url 'schedule' %}">Розклад</a>
           {% if user.is_staff %}
             
             <a href="{% url 'admin:index' %}">Адмін-сторінка</a>
