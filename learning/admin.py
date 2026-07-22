@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
@@ -21,11 +21,73 @@ from .models import (
     QuizQuestion,
     Submission,
     SubmissionAttachment,
+    ScheduleEntry,
+    ScheduleException,
+    HomeworkNotification,
+    LessonReminder,
     StudentWord,
     TelegramAccount,
+    TelegramBroadcast,
     VocabularySet,
     VocabularyWord,
 )
+
+
+@admin.action(description="Надіслати актуальний розклад у Telegram")
+def send_schedule_to_telegram(modeladmin, request, queryset):
+    """One action sends each selected student's full schedule, not one row."""
+    from .telegram_bot import send_schedule
+
+    sent = missing = failed = 0
+    student_ids = queryset.values_list("student_id", flat=True).distinct()
+    for student in User.objects.filter(pk__in=student_ids):
+        try:
+            if send_schedule(student):
+                sent += 1
+            else:
+                missing += 1
+        except Exception:
+            failed += 1
+    message = f"Розклад надіслано: {sent}. Без прив’язаного Telegram: {missing}. Помилок: {failed}."
+    level = messages.SUCCESS if not failed else messages.WARNING
+    modeladmin.message_user(request, message, level=level)
+
+
+@admin.action(description="Надіслати повідомлення про вибрані домашні завдання")
+def announce_homework_to_telegram(modeladmin, request, queryset):
+    from .signals import deliver_homework_announcement
+
+    for assignment in queryset:
+        deliver_homework_announcement(assignment.pk)
+    modeladmin.message_user(request, "Повідомлення про домашні завдання надіслано прив'язаним учням.", level=messages.SUCCESS)
+
+
+@admin.action(description="Надіслати вибрані розсилки в Telegram")
+def send_broadcast_to_telegram(modeladmin, request, queryset):
+    from django.utils import timezone
+    from .telegram_bot import send
+
+    total_sent = total_missing = total_failed = 0
+    errors = []
+    for broadcast in queryset:
+        recipients = broadcast.recipients.all()
+        # Include every linked account, including a staff account used for testing.
+        accounts = TelegramAccount.objects.filter(chat_id__isnull=False)
+        if recipients.exists():
+            accounts = accounts.filter(user__in=recipients)
+        for account in accounts.select_related("user"):
+            try:
+                send(account.chat_id, f"📣 {broadcast.title}\n\n{broadcast.message}")
+                total_sent += 1
+            except Exception as exc:
+                total_failed += 1
+                errors.append(str(exc))
+        total_missing += recipients.exclude(telegram_account__chat_id__isnull=False).count() if recipients.exists() else 0
+        broadcast.sent_at = timezone.now()
+        broadcast.save(update_fields=["sent_at"])
+    level = messages.SUCCESS if not total_failed else messages.WARNING
+    detail = f" Причина: {errors[0]}" if errors else ""
+    modeladmin.message_user(request, f"Надіслано: {total_sent}. Без Telegram: {total_missing}. Помилок: {total_failed}.{detail}", level=level)
 
 
 class EnrollmentInline(admin.TabularInline):
@@ -63,6 +125,14 @@ class TelegramAccountAdmin(admin.ModelAdmin):
     list_display = ("user", "chat_id", "link_code", "linked_at")
     search_fields = ("user__username", "user__first_name", "user__last_name", "link_code")
     readonly_fields = ("link_code", "linked_at")
+
+
+@admin.register(TelegramBroadcast)
+class TelegramBroadcastAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_at", "sent_at")
+    search_fields = ("title", "message")
+    filter_horizontal = ("recipients",)
+    actions = [send_broadcast_to_telegram]
 
 
 @admin.register(ParentChild)
@@ -192,6 +262,56 @@ class AssignmentAdmin(admin.ModelAdmin):
     list_display = ("title", "lesson", "due_date", "max_points")
     list_filter = ("lesson__module__course",)
     search_fields = ("title", "task")
+    actions = [announce_homework_to_telegram]
+
+
+class ScheduleExceptionInline(admin.TabularInline):
+    model = ScheduleException
+    extra = 0
+    fields = ("date", "is_cancelled", "title", "starts_at", "ends_at", "location", "meeting_url", "note")
+
+@admin.register(ScheduleEntry)
+class ScheduleEntryAdmin(admin.ModelAdmin):
+    list_display = ("student", "title", "weekday", "starts_at", "ends_at", "teacher", "location", "is_cancelled")
+    list_filter = ("weekday", "is_cancelled")
+    search_fields = ("student__username", "student__first_name", "student__last_name", "title", "teacher", "location")
+    autocomplete_fields = ("student",)
+    inlines = [ScheduleExceptionInline]
+    actions = [send_schedule_to_telegram]
+
+
+@admin.register(ScheduleException)
+class ScheduleExceptionAdmin(admin.ModelAdmin):
+    list_display = ("schedule_entry", "date", "is_cancelled", "starts_at", "ends_at")
+    list_filter = ("is_cancelled", "date")
+    search_fields = ("schedule_entry__student__username", "schedule_entry__title", "title")
+    autocomplete_fields = ("schedule_entry",)
+
+
+@admin.register(HomeworkNotification)
+class HomeworkNotificationAdmin(admin.ModelAdmin):
+    list_display = ("assignment", "recipient", "sent_at", "error")
+    search_fields = ("assignment__title", "recipient__username")
+    readonly_fields = ("assignment", "recipient", "sent_at", "error")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(LessonReminder)
+class LessonReminderAdmin(admin.ModelAdmin):
+    list_display = ("schedule_entry", "recipient", "occurrence_date", "lead_hours", "sent_at", "error")
+    search_fields = ("schedule_entry__student__username", "schedule_entry__title", "recipient__username")
+    readonly_fields = ("schedule_entry", "recipient", "occurrence_date", "lead_hours", "sent_at", "error")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class QuizQuestionInline(admin.StackedInline):

@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260713-student-tools">
+    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260722-schedule">
   </head>
   <body>
     <header class="app-header">
@@ -27,6 +27,7 @@
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard' %}">Платформа</a>
           <a href="{% url 'profile_settings' %}">Профіль</a>
+          <a href="{% url 'schedule' %}">Schedule</a>
           {% if user.is_staff %}
             
             <a href="{% url 'admin:index' %}">Адмін-сторінка</a>

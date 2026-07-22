@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import ProfileForm, QuizTakeForm, ReviewSubmissionForm, SubmissionForm
 from .models import (
@@ -21,6 +22,8 @@ from .models import (
     StudentWord,
     Submission,
     SubmissionAttachment,
+    ScheduleEntry,
+    ScheduleException,
     VocabularyWord,
 )
 
@@ -83,6 +86,22 @@ def dashboard(request):
             "lessons_done": lessons_done,
         },
     )
+
+
+@login_required
+def schedule(request):
+    """Show only meetings the current user is entitled to see."""
+    entries = ScheduleEntry.objects.select_related("student").filter(is_cancelled=False)
+    if is_platform_manager(request.user):
+        pass
+    elif is_parent(request.user):
+        child_ids = ParentChild.objects.filter(parent=request.user).values_list("child_id", flat=True)
+        entries = entries.filter(student_id__in=child_ids)
+    else:
+        entries = entries.filter(student=request.user)
+    entries = entries.distinct().order_by("weekday", "starts_at")
+    exceptions = ScheduleException.objects.filter(schedule_entry__in=entries, date__gte=timezone.localdate()).select_related("schedule_entry").order_by("date", "starts_at")
+    return render(request, "learning/schedule.html", {"entries": entries, "exceptions": exceptions})
 
 
 @login_required

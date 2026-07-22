@@ -273,6 +273,110 @@ class Assignment(models.Model):
         return self.title
 
 
+class ScheduleEntry(models.Model):
+    """A personal class that repeats every week for one student."""
+
+    class Weekday(models.IntegerChoices):
+        MONDAY = 0, "Понеділок"
+        TUESDAY = 1, "Вівторок"
+        WEDNESDAY = 2, "Середа"
+        THURSDAY = 3, "Четвер"
+        FRIDAY = 4, "П’ятниця"
+        SATURDAY = 5, "Субота"
+        SUNDAY = 6, "Неділя"
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="schedule_entries", verbose_name="учень")
+    title = models.CharField("назва заняття", max_length=180)
+    weekday = models.PositiveSmallIntegerField("день тижня", choices=Weekday.choices)
+    starts_at = models.TimeField("час початку")
+    ends_at = models.TimeField("час завершення", blank=True, null=True)
+    teacher = models.CharField("викладач", max_length=140, blank=True)
+    location = models.CharField("місце або аудиторія", max_length=180, blank=True)
+    meeting_url = models.URLField("посилання на онлайн-зустріч", blank=True)
+    note = models.TextField("примітка", blank=True)
+    is_cancelled = models.BooleanField("скасовано", default=False)
+    created_at = models.DateTimeField("створено", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "заняття в розкладі"
+        verbose_name_plural = "розклад занять"
+        ordering = ["student__last_name", "student__first_name", "weekday", "starts_at"]
+
+    def __str__(self):
+        return f"{self.student}: {self.get_weekday_display()} {self.starts_at:%H:%M} — {self.title}"
+
+
+class HomeworkNotification(models.Model):
+    """Delivery record for the initial Telegram homework announcement."""
+
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name="telegram_notifications")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="homework_notifications")
+    sent_at = models.DateTimeField("надіслано", blank=True, null=True)
+    error = models.TextField("помилка", blank=True)
+
+    class Meta:
+        verbose_name = "сповіщення про домашнє завдання"
+        verbose_name_plural = "сповіщення про домашні завдання"
+        constraints = [models.UniqueConstraint(fields=["assignment", "recipient"], name="unique_homework_notification")]
+
+
+class ScheduleException(models.Model):
+    """A one-date override of a student's recurring weekly class."""
+
+    schedule_entry = models.ForeignKey(ScheduleEntry, on_delete=models.CASCADE, related_name="exceptions", verbose_name="заняття розкладу")
+    date = models.DateField("дата")
+    title = models.CharField("інша назва заняття", max_length=180, blank=True)
+    starts_at = models.TimeField("інший час початку", blank=True, null=True)
+    ends_at = models.TimeField("інший час завершення", blank=True, null=True)
+    location = models.CharField("інше місце або аудиторія", max_length=180, blank=True)
+    meeting_url = models.URLField("інше посилання на онлайн-зустріч", blank=True)
+    note = models.TextField("примітка", blank=True)
+    is_cancelled = models.BooleanField("скасувати заняття цього дня", default=False)
+
+    class Meta:
+        verbose_name = "зміна розкладу на дату"
+        verbose_name_plural = "зміни розкладу на окремі дати"
+        ordering = ["date"]
+        constraints = [models.UniqueConstraint(fields=["schedule_entry", "date"], name="unique_schedule_exception_date")]
+
+    def __str__(self):
+        return f"{self.schedule_entry} — {self.date:%d.%m.%Y}"
+
+
+class TelegramBroadcast(models.Model):
+    """A teacher-created Telegram announcement for selected students."""
+
+    title = models.CharField("назва розсилки", max_length=180)
+    message = models.TextField("текст повідомлення")
+    recipients = models.ManyToManyField(User, related_name="telegram_broadcasts", blank=True, verbose_name="одержувачі")
+    created_at = models.DateTimeField("створено", auto_now_add=True)
+    sent_at = models.DateTimeField("останнє надсилання", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "розсилка Telegram"
+        verbose_name_plural = "розсилки Telegram"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class LessonReminder(models.Model):
+    """Makes the 24-hour schedule reminder safe to run repeatedly."""
+
+    schedule_entry = models.ForeignKey(ScheduleEntry, on_delete=models.CASCADE, related_name="reminders")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="lesson_reminders")
+    occurrence_date = models.DateField("дата заняття")
+    lead_hours = models.PositiveSmallIntegerField("годин до заняття")
+    sent_at = models.DateTimeField("надіслано", blank=True, null=True)
+    error = models.TextField("помилка", blank=True)
+
+    class Meta:
+        verbose_name = "нагадування про заняття"
+        verbose_name_plural = "нагадування про заняття"
+        constraints = [models.UniqueConstraint(fields=["schedule_entry", "recipient", "occurrence_date", "lead_hours"], name="unique_schedule_reminder")]
+
+
 class Quiz(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="quizzes", verbose_name="урок")
     title = models.CharField("назва тесту", max_length=180)

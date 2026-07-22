@@ -1,0 +1,55 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Мій розклад{% endblock %}
+
+{% block content %}
+  <section class="schedule-page">
+    <header class="schedule-hero">
+      <span class="eyebrow">Мої заняття</span>
+      <h1>Розклад на тиждень</h1>
+      <p>Тут зібрані всі регулярні заняття. Зміни на окремі дати показані нижче.</p>
+    </header>
+
+    <div class="schedule-list">
+      {% for entry in entries %}
+        <article class="schedule-card">
+          <div class="schedule-time">
+            <strong>{{ entry.starts_at|time:"H:i" }}</strong>
+            {% if entry.ends_at %}<span>до {{ entry.ends_at|time:"H:i" }}</span>{% endif %}
+          </div>
+          <div class="schedule-info">
+            <span class="schedule-day">{{ entry.get_weekday_display }}</span>
+            <h2>{{ entry.title }}</h2>
+            {% if entry.teacher %}<p>Викладач: {{ entry.teacher }}</p>{% endif %}
+            {% if entry.location %}<p>Місце: {{ entry.location }}</p>{% endif %}
+            {% if entry.note %}<p>{{ entry.note }}</p>{% endif %}
+            {% if entry.meeting_url %}<a href="{{ entry.meeting_url }}" target="_blank" rel="noopener">Приєднатися до заняття</a>{% endif %}
+          </div>
+        </article>
+      {% empty %}
+        <article class="schedule-empty">
+          <h2>Розклад ще не призначено</h2>
+          <p>Викладач або адміністратор додасть його найближчим часом.</p>
+        </article>
+      {% endfor %}
+    </div>
+
+    {% if exceptions %}
+      <section class="schedule-changes">
+        <div>
+          <span class="eyebrow">Важливо</span>
+          <h2>Зміни в розкладі</h2>
+        </div>
+        {% for item in exceptions %}
+          <article class="schedule-change {% if item.is_cancelled %}is-cancelled{% endif %}">
+            <strong>{{ item.date|date:"d.m.Y" }}{% if item.starts_at %} · {{ item.starts_at|time:"H:i" }}{% endif %}</strong>
+            <span>{{ item.title|default:item.schedule_entry.title }}</span>
+            {% if item.is_cancelled %}<em>Заняття скасовано</em>{% endif %}
+            {% if item.location %}<small>{{ item.location }}</small>{% endif %}
+            {% if item.note %}<p>{{ item.note }}</p>{% endif %}
+          </article>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}
