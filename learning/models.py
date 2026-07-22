@@ -1,6 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
+import secrets
+
+
+def generate_telegram_link_code():
+    return secrets.token_urlsafe(18)
 
 
 class Profile(models.Model):
@@ -25,6 +30,22 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
+
+
+class TelegramAccount(models.Model):
+    """A private link between a platform user and a Telegram conversation."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="telegram_account", verbose_name="користувач")
+    chat_id = models.BigIntegerField("Telegram chat ID", blank=True, null=True, unique=True)
+    link_code = models.CharField("код прив’язки", max_length=32, unique=True, default=generate_telegram_link_code, editable=False)
+    linked_at = models.DateTimeField("прив’язано", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Telegram-акаунт"
+        verbose_name_plural = "Telegram-акаунти"
+
+    def __str__(self):
+        return f"{self.user} — {'підключено' if self.chat_id else 'очікує підключення'}"
 
 
 class ParentChild(models.Model):

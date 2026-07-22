@@ -22,6 +22,7 @@ from .models import (
     Submission,
     SubmissionAttachment,
     StudentWord,
+    TelegramAccount,
     VocabularySet,
     VocabularyWord,
 )
@@ -55,6 +56,13 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "role", "child_name", "parent_name", "phone", "learning_goal")
     list_filter = ("role",)
     search_fields = ("user__username", "user__first_name", "user__last_name", "child_name", "parent_name", "phone", "learning_goal")
+
+
+@admin.register(TelegramAccount)
+class TelegramAccountAdmin(admin.ModelAdmin):
+    list_display = ("user", "chat_id", "link_code", "linked_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "link_code")
+    readonly_fields = ("link_code", "linked_at")
 
 
 @admin.register(ParentChild)
