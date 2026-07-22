@@ -44,12 +44,22 @@ def send_menu(chat_id, text="Оберіть потрібний розділ:"):
 
 def _link(chat_id, code):
     account = TelegramAccount.objects.select_related("user").filter(link_code=code).first()
+
     if not account:
         return None, "❌ Код прив’язки не знайдено. Перевірте його в адміністратора."
-    if account.chat_id and account.chat_id != chat_id:
-        return None, "❌ Цей код уже використано. Попросіть викладача створити новий."
-    account.chat_id, account.linked_at = chat_id, timezone.now()
+
+    # Якщо цей Telegram вже був прив'язаний до іншого користувача,
+    # від'єднуємо його.
+    TelegramAccount.objects.filter(chat_id=chat_id).exclude(pk=account.pk).update(
+        chat_id=None,
+        linked_at=None,
+    )
+
+    # Переприв'язуємо акаунт
+    account.chat_id = chat_id
+    account.linked_at = timezone.now()
     account.save(update_fields=["chat_id", "linked_at"])
+
     return account, "✅ Акаунт успішно підключено."
 
 
