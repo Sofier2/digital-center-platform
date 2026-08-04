@@ -1,12 +1,12 @@
 {% extends "learning/base.html" %}
 
-{% block title %}Панель платформи{% endblock %}
+{% block title %}Панель викладача{% endblock %}
 
 {% block content %}
   <section class="page-hero admin-hero">
     <span class="eyebrow">Панель викладача</span>
     <h1>Навчальна платформа центру</h1>
-    <p>Керування курсами, доступами учнів, домашніми роботами, тестами та оцінюванням в одному кабінеті.</p>
+    <p>Керуйте курсами, доступами учнів, домашніми роботами, тестами та журналом відвідуваності.</p>
   </section>
 
   <section class="admin-stats">
@@ -16,41 +16,5 @@
     <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
     <a href="{% url 'platform_admin_quizzes' %}"><strong>{{ quiz_attempts_count }}</strong><span>Тести</span></a>
     <a href="{% url 'platform_admin_attendance' %}"><strong>✓</strong><span>Відвідуваність</span></a>
-  </section>
-
-  <section class="admin-panel">
-    <div class="section-title">
-      <span class="eyebrow light">Останні роботи</span>
-      <h2>Що здали учні</h2>
-    </div>
-    <div class="table-list">
-      {% for submission in submissions %}
-        <a class="table-row" href="{% url 'review_submission' submission.id %}">
-          <span>{{ submission.student.get_full_name|default:submission.student.username }}</span>
-          <strong>{{ submission.assignment.title }}</strong>
-          {% if submission.points != None %}<b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>{% else %}<em>Перевірити</em>{% endif %}
-        </a>
-      {% empty %}
-        <p class="muted">Робіт ще немає.</p>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="admin-panel">
-    <div class="section-title">
-      <span class="eyebrow light">Тестування</span>
-      <h2>Останні результати тестів</h2>
-    </div>
-    <div class="table-list">
-      {% for attempt in quiz_attempts %}
-        <a class="table-row" href="{% url 'quiz_result' attempt.id %}">
-          <span>{{ attempt.student.get_full_name|default:attempt.student.username }}</span>
-          <strong>{{ attempt.quiz.title }}</strong>
-          <b>{{ attempt.score_percent }}%</b>
-        </a>
-      {% empty %}
-        <p class="muted">Результатів тестів ще немає.</p>
-      {% endfor %}
-    </div>
   </section>
 {% endblock %}
