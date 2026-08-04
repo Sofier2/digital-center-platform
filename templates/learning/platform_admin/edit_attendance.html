@@ -1,0 +1,25 @@
+{% extends "learning/base.html" %}
+{% load learning_extras %}
+
+{% block title %}Відмітити відвідуваність{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact admin-hero">
+    <span class="eyebrow">{{ session.course.title }}</span>
+    <h1>Відвідуваність · {{ session.date|date:'d.m.Y' }}</h1>
+    {% if session.title %}<p>{{ session.title }}</p>{% endif %}
+  </section>
+  <section class="admin-panel">
+    <form method="post">
+      {% csrf_token %}
+      <div class="table-list">
+        {% for student in students %}
+          {% with record=existing|dict_get:student.id %}
+          <div class="table-row rich"><strong>{{ student.get_full_name|default:student.username }}</strong><select name="status_{{ student.id }}">{% for value, label in statuses %}<option value="{{ value }}" {% if record and record.status == value %}selected{% elif not record and value == 'present' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><input name="note_{{ student.id }}" value="{{ record.note|default:'' }}" placeholder="Примітка"></div>
+          {% endwith %}
+        {% empty %}<p class="muted">На цей курс ще не зараховано учнів.</p>{% endfor %}
+      </div>
+      {% if students %}<p><button type="submit" class="primary-btn">Зберегти відмітки</button></p>{% endif %}
+    </form>
+  </section>
+{% endblock %}

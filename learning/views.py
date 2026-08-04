@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -10,6 +11,8 @@ from django.utils import timezone
 from .forms import ProfileForm, QuizTakeForm, ReviewSubmissionForm, SubmissionForm
 from .models import (
     Assignment,
+    AttendanceRecord,
+    AttendanceSession,
     Course,
     Enrollment,
     Lesson,
@@ -19,6 +22,8 @@ from .models import (
     Quiz,
     QuizAnswer,
     QuizAttempt,
+    QuizChoice,
+    QuizQuestion,
     StudentWord,
     Submission,
     SubmissionAttachment,
@@ -434,7 +439,86 @@ def platform_admin_submissions(request):
 @user_passes_test(is_platform_manager)
 def platform_admin_quizzes(request):
     attempts = QuizAttempt.objects.select_related("student", "quiz", "quiz__lesson", "quiz__lesson__module__course").order_by("-completed_at")
-    return render(request, "learning/platform_admin/quizzes.html", {"attempts": attempts})
+    quizzes = Quiz.objects.select_related("lesson", "lesson__module", "lesson__module__course").annotate(questions_total=Count("questions")).order_by("-id")
+    return render(request, "learning/platform_admin/quizzes.html", {"attempts": attempts, "quizzes": quizzes})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def create_quiz(request):
+    lessons = Lesson.objects.select_related("module", "module__course").order_by("module__course__title", "module__order", "order")
+    if request.method == "POST":
+        lesson = get_object_or_404(Lesson, pk=request.POST.get("lesson_id"))
+        title = request.POST.get("title", "").strip()
+        question_texts = request.POST.getlist("question_text")
+        if not title or not any(item.strip() for item in question_texts):
+            messages.error(request, "Вкажіть назву тесту та хоча б одне питання.")
+        else:
+            with transaction.atomic():
+                quiz = Quiz.objects.create(
+                    lesson=lesson,
+                    title=title,
+                    description=request.POST.get("description", "").strip(),
+                    max_points=request.POST.get("max_points") or 100,
+                    passing_percent=request.POST.get("passing_percent") or 60,
+                    is_published=request.POST.get("is_published") == "on",
+                    allow_retakes=request.POST.get("allow_retakes") == "on",
+                )
+                created = 0
+                for index, text in enumerate(question_texts):
+                    text = text.strip()
+                    choices = [item.strip() for item in request.POST.getlist(f"choices_{index}") if item.strip()]
+                    correct = request.POST.get(f"correct_{index}", "0")
+                    if not text or len(choices) < 2:
+                        continue
+                    question = QuizQuestion.objects.create(quiz=quiz, text=text, order=created + 1)
+                    for choice_index, choice in enumerate(choices):
+                        QuizChoice.objects.create(question=question, text=choice, order=choice_index + 1, is_correct=str(choice_index) == correct)
+                    created += 1
+                if not created:
+                    quiz.delete()
+                    messages.error(request, "Кожне питання має містити щонайменше два варіанти відповіді.")
+                else:
+                    messages.success(request, f"Тест «{quiz.title}» створено: {created} питань.")
+                    return redirect("platform_admin_quizzes")
+    return render(request, "learning/platform_admin/create_quiz.html", {"lessons": lessons})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def platform_admin_attendance(request):
+    courses = Course.objects.filter(is_published=True).order_by("title")
+    if request.method == "POST":
+        course = get_object_or_404(Course, pk=request.POST.get("course_id"))
+        session_date = request.POST.get("date") or date.today().isoformat()
+        session, created = AttendanceSession.objects.get_or_create(
+            course=course, date=session_date,
+            defaults={"title": request.POST.get("title", "").strip()},
+        )
+        if not created and request.POST.get("title", "").strip():
+            session.title = request.POST["title"].strip()
+            session.save(update_fields=["title"])
+        return redirect("edit_attendance", pk=session.pk)
+    sessions = AttendanceSession.objects.select_related("course").annotate(students_total=Count("records")).all()
+    return render(request, "learning/platform_admin/attendance.html", {"courses": courses, "sessions": sessions, "today": date.today()})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def edit_attendance(request, pk):
+    session = get_object_or_404(AttendanceSession.objects.select_related("course"), pk=pk)
+    students = User.objects.filter(enrollments__course=session.course, enrollments__is_active=True).distinct().order_by("first_name", "last_name", "username")
+    existing = {record.student_id: record for record in session.records.filter(student__in=students)}
+    if request.method == "POST":
+        for student in students:
+            AttendanceRecord.objects.update_or_create(
+                session=session,
+                student=student,
+                defaults={"status": request.POST.get(f"status_{student.id}", AttendanceRecord.Status.PRESENT), "note": request.POST.get(f"note_{student.id}", "").strip()},
+            )
+        messages.success(request, "Відвідуваність збережено.")
+        return redirect("edit_attendance", pk=session.pk)
+    return render(request, "learning/platform_admin/edit_attendance.html", {"session": session, "students": students, "existing": existing, "statuses": AttendanceRecord.Status.choices})
 
 
 @login_required

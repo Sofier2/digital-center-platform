@@ -435,6 +435,46 @@ class QuizChoice(models.Model):
         return self.text
 
 
+class AttendanceSession(models.Model):
+    """A teacher's attendance register for one course meeting."""
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="attendance_sessions", verbose_name="курс")
+    date = models.DateField("дата заняття")
+    title = models.CharField("тема або назва заняття", max_length=180, blank=True)
+    created_at = models.DateTimeField("створено", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "заняття в журналі відвідуваності"
+        verbose_name_plural = "журнал відвідуваності"
+        ordering = ["-date", "course__title"]
+        constraints = [models.UniqueConstraint(fields=["course", "date"], name="unique_attendance_course_date")]
+
+    def __str__(self):
+        return f"{self.course} — {self.date:%d.%m.%Y}"
+
+
+class AttendanceRecord(models.Model):
+    class Status(models.TextChoices):
+        PRESENT = "present", "Був/була"
+        ABSENT = "absent", "Відсутній/відсутня"
+        LATE = "late", "Запізнився/запізнилась"
+        EXCUSED = "excused", "Поважна причина"
+
+    session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE, related_name="records", verbose_name="заняття")
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="attendance_records", verbose_name="учень")
+    status = models.CharField("статус", max_length=20, choices=Status.choices, default=Status.PRESENT)
+    note = models.CharField("примітка", max_length=180, blank=True)
+
+    class Meta:
+        verbose_name = "відмітка відвідуваності"
+        verbose_name_plural = "відмітки відвідуваності"
+        constraints = [models.UniqueConstraint(fields=["session", "student"], name="unique_attendance_session_student")]
+        ordering = ["student__first_name", "student__last_name", "student__username"]
+
+    def __str__(self):
+        return f"{self.student} — {self.session}: {self.get_status_display()}"
+
+
 class QuizAttempt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempts", verbose_name="тест")
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="quiz_attempts", verbose_name="учень")

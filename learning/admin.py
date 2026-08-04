@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 
 from .models import (
     Assignment,
+    AttendanceRecord,
+    AttendanceSession,
     Course,
     Enrollment,
     Lesson,
@@ -338,6 +340,28 @@ class QuizChoiceInline(admin.TabularInline):
     model = QuizChoice
     extra = 3
     fields = ("text", "is_correct", "order")
+
+
+class AttendanceRecordInline(admin.TabularInline):
+    model = AttendanceRecord
+    extra = 0
+    fields = ("student", "status", "note")
+    autocomplete_fields = ("student",)
+
+
+@admin.register(AttendanceSession)
+class AttendanceSessionAdmin(admin.ModelAdmin):
+    list_display = ("course", "date", "title")
+    list_filter = ("course", "date")
+    search_fields = ("course__title", "title")
+    inlines = [AttendanceRecordInline]
+
+
+@admin.register(AttendanceRecord)
+class AttendanceRecordAdmin(admin.ModelAdmin):
+    list_display = ("student", "session", "status", "note")
+    list_filter = ("status", "session__course", "session__date")
+    search_fields = ("student__username", "student__first_name", "student__last_name", "note")
 
 
 @admin.register(QuizQuestion)

@@ -19,5 +19,8 @@ urlpatterns = [
     path("manage/students/", views.platform_admin_students, name="platform_admin_students"),
     path("manage/submissions/", views.platform_admin_submissions, name="platform_admin_submissions"),
     path("manage/quizzes/", views.platform_admin_quizzes, name="platform_admin_quizzes"),
+    path("manage/quizzes/create/", views.create_quiz, name="create_quiz"),
+    path("manage/attendance/", views.platform_admin_attendance, name="platform_admin_attendance"),
+    path("manage/attendance/<int:pk>/", views.edit_attendance, name="edit_attendance"),
     path("manage/submissions/<int:pk>/", views.review_submission, name="review_submission"),
 ]

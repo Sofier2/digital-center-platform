@@ -10,6 +10,23 @@
   </section>
 
   <section class="admin-panel">
+    <div class="section-title">
+      <div><span class="eyebrow light">Конструктор</span><h2>Тести</h2></div>
+      <a class="primary-btn" href="{% url 'create_quiz' %}">+ Створити тест</a>
+    </div>
+    <div class="table-list">
+      {% for quiz in quizzes %}
+        <div class="table-row rich">
+          <strong>{{ quiz.title }}</strong>
+          <small>{{ quiz.lesson.module.course.title }} · {{ quiz.lesson.title }}</small>
+          <b>{{ quiz.questions_total }} питань</b>
+          <em>{% if quiz.is_published %}Опубліковано{% else %}Чернетка{% endif %}</em>
+        </div>
+      {% empty %}<p class="muted">Тестів ще немає. Створіть перший за кілька хвилин.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-panel">
     <div class="table-list">
       {% for attempt in attempts %}
         <a class="table-row rich" href="{% url 'quiz_result' attempt.id %}">
