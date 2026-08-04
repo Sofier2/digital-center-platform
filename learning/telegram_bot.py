@@ -12,7 +12,7 @@ from .models import Assignment, Lesson, ScheduleEntry, ScheduleException, Submis
 
 API_URL = "https://api.telegram.org/bot{token}/{method}"
 MENU = {
-    "keyboard": [["📚 Мої уроки", "📝 Домашні завдання"], ["📅 Мій розклад", "ℹ️ Допомога"]],
+    "keyboard": [["📝 Домашні завдання", "📅 Мій розклад"], ["ℹ️ Допомога"]],
     "resize_keyboard": True,
     "is_persistent": True,
 }
