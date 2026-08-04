@@ -21,7 +21,12 @@
   <section class="admin-panel">
     <div class="section-title"><h2>Попередні заняття</h2></div>
     <div class="table-list">
-      {% for session in sessions %}<a class="table-row rich" href="{% url 'edit_attendance' session.id %}"><strong>{{ session.course.title }}</strong><span>{{ session.date|date:'d.m.Y' }}{% if session.title %} · {{ session.title }}{% endif %}</span><b>{{ session.students_total }} учнів</b></a>{% empty %}<p class="muted">Журнал поки що порожній.</p>{% endfor %}
+      {% for session in sessions %}
+        <div class="table-row rich">
+          <a href="{% url 'edit_attendance' session.id %}"><strong>{{ session.course.title }}</strong><span>{{ session.date|date:'d.m.Y' }}{% if session.title %} · {{ session.title }}{% endif %}</span><b>{{ session.students_total }} учнів</b></a>
+          <form method="post" action="{% url 'delete_attendance' session.id %}" onsubmit="return confirm('Видалити цей запис заняття та всі відмітки?');">{% csrf_token %}<button type="submit" class="secondary-btn">Видалити</button></form>
+        </div>
+      {% empty %}<p class="muted">Журнал поки що порожній.</p>{% endfor %}
     </div>
   </section>
 {% endblock %}

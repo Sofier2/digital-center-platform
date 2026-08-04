@@ -8,6 +8,7 @@
     <span class="eyebrow">{{ session.course.title }}</span>
     <h1>Відвідуваність · {{ session.date|date:'d.m.Y' }}</h1>
     {% if session.title %}<p>{{ session.title }}</p>{% endif %}
+    <form method="post" action="{% url 'delete_attendance' session.id %}" onsubmit="return confirm('Видалити цей запис заняття та всі відмітки?');">{% csrf_token %}<button type="submit" class="secondary-btn">Видалити запис заняття</button></form>
   </section>
   <section class="admin-panel">
     <form method="post">

@@ -110,6 +110,18 @@ def schedule(request):
 
 
 @login_required
+def my_attendance(request):
+    if is_platform_manager(request.user):
+        return redirect("platform_admin_attendance")
+    records = (
+        AttendanceRecord.objects.filter(student=request.user)
+        .select_related("session", "session__course")
+        .order_by("-session__date", "session__course__title")
+    )
+    return render(request, "learning/my_attendance.html", {"records": records})
+
+
+@login_required
 def profile_settings(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
     if request.method == "POST":
@@ -519,6 +531,17 @@ def edit_attendance(request, pk):
         messages.success(request, "Відвідуваність збережено.")
         return redirect("edit_attendance", pk=session.pk)
     return render(request, "learning/platform_admin/edit_attendance.html", {"session": session, "students": students, "existing": existing, "statuses": AttendanceRecord.Status.choices})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def delete_attendance(request, pk):
+    if request.method != "POST":
+        return redirect("platform_admin_attendance")
+    session = get_object_or_404(AttendanceSession, pk=pk)
+    session.delete()
+    messages.success(request, "Запис заняття та його відмітки видалено.")
+    return redirect("platform_admin_attendance")
 
 
 @login_required

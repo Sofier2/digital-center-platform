@@ -41,7 +41,7 @@ class Command(BaseCommand):
                     location_line = f"\n{location}" if location else ""
                     link_line = f"\n{meeting_url}" if meeting_url else ""
                     try:
-                        send(account.chat_id, f"⏰ Нагадування: заняття через {lead_hours} год.\n{target:%d.%m.%Y о %H:%M}\n{title}{location_line}{link_line}")
+                        send(account.chat_id, f"⏰ Нагадування: заняття через {lead_hours} год.\n{occurrence:%d.%m.%Y о %H:%M}\n{title}{location_line}{link_line}")
                         reminder.sent_at, reminder.error = timezone.now(), ""
                         sent += 1
                     except Exception as exc:

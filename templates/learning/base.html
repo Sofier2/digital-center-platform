@@ -28,6 +28,11 @@
           <a href="{% url 'dashboard' %}">Платформа</a>
           <a href="{% url 'profile_settings' %}">Профіль</a>
           <a href="{% url 'schedule' %}">Розклад</a>
+          {% if user_role == "teacher" or user.is_staff %}
+            <a href="{% url 'platform_admin_attendance' %}">Журнал</a>
+          {% else %}
+            <a href="{% url 'my_attendance' %}">Відвідуваність</a>
+          {% endif %}
           {% if user.is_staff %}
             
             <a href="{% url 'admin:index' %}">Адмін-сторінка</a>
