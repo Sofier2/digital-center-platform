@@ -10,11 +10,11 @@
   </section>
 
   <section class="admin-stats">
-    <a href="{% url 'platform_admin_courses' %}"><strong>{{ courses_count }}</strong><span>Курсів</span></a>
-    <a href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
-    <a href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
-    <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
-    <a href="{% url 'platform_admin_quizzes' %}"><strong>{{ quiz_attempts_count }}</strong><span>Тести</span></a>
-    <a href="{% url 'platform_admin_attendance' %}"><strong>✓</strong><span>Відвідуваність</span></a>
+    <a class="teacher-stat stat-courses" href="{% url 'platform_admin_courses' %}"><strong>{{ courses_count }}</strong><span>Курсів</span></a>
+    <a class="teacher-stat stat-students" href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
+    <a class="teacher-stat stat-pending" href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
+    <a class="teacher-stat stat-checked" href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
+    <a class="teacher-stat stat-quizzes" href="{% url 'platform_admin_quizzes' %}"><strong>{{ quiz_attempts_count }}</strong><span>Тести</span></a>
+    <a class="teacher-stat stat-attendance" href="{% url 'platform_admin_attendance' %}"><strong>✓</strong><span>Відвідуваність</span></a>
   </section>
 {% endblock %}
