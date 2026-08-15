@@ -1,0 +1,42 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Результат тесту{% endblock %}
+
+{% block content %}
+  <section class="quiz-shell">
+    <article class="lesson-main quiz-intro">
+      <a class="back-link" href="{{ quiz.lesson.get_absolute_url }}">Назад до уроку</a>
+      <span class="eyebrow light">{{ quiz.lesson.module.course.title }}</span>
+      <h1>{{ quiz.title }}</h1>
+      <div class="result-score {% if attempt.is_passed %}passed{% else %}failed{% endif %}">
+        <strong>{{ attempt.score_percent }}%</strong>
+        <span>{{ attempt.correct_count }}/{{ attempt.total_count }} правильних відповідей</span>
+        <b>{{ attempt.points }}/{{ quiz.max_points }} балів</b>
+      </div>
+      {% if attempt.is_passed %}
+        <p class="lead">Тест складено. Результат збережено в кабінеті.</p>
+      {% else %}
+        <p class="lead">Результат нижчий за прохідний рівень {{ quiz.passing_percent }}%.</p>
+      {% endif %}
+      {% if quiz.allow_retakes %}
+        <a class="primary-btn fit-btn" href="{{ quiz.get_absolute_url }}">Пройти ще раз</a>
+      {% endif %}
+    </article>
+
+    <section class="quiz-card">
+      <h2>Відповіді</h2>
+      {% for answer in attempt.answers.all %}
+        <article class="answer-row {% if answer.is_correct %}correct{% else %}wrong{% endif %}">
+          {% if answer.question.context_text %}
+            <div class="result-context">{{ answer.question.context_text|linebreaks }}</div>
+          {% endif %}
+          <strong>{{ forloop.counter }}. {{ answer.question.text }}</strong>
+          <p>Твоя відповідь: {{ answer.selected_choice.text|default:"Не обрано" }}</p>
+          {% if answer.question.explanation %}<small>{{ answer.question.explanation }}</small>{% endif %}
+        </article>
+      {% empty %}
+        <p class="muted">Відповіді не знайдені.</p>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}

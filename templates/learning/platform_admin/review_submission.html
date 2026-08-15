@@ -1,0 +1,51 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Оцінювання роботи{% endblock %}
+
+{% block content %}
+  <section class="review-layout">
+    <article class="lesson-main">
+      <a class="back-link" href="{% url 'platform_admin_submissions' %}">Назад до перевірки</a>
+      <span class="eyebrow light">{{ submission.assignment.lesson.module.course.title }}</span>
+      <h1>{{ submission.assignment.title }}</h1>
+      <p class="lead">{{ submission.assignment.task }}</p>
+
+      <div class="submission-box">
+        <h2>Робота учня</h2>
+        <p><strong>{{ submission.student.get_full_name|default:submission.student.username }}</strong></p>
+        {% if submission.answer %}<p>{{ submission.answer|linebreaks }}</p>{% endif %}
+        {% if submission.file %}
+          {% include "learning/partials/file_preview.html" with file=submission.file title="Файл роботи" %}
+        {% endif %}
+        {% if submission.attachments.all %}
+          <div class="attachment-list">
+            <strong>Додаткові вкладення</strong>
+            {% for attachment in submission.attachments.all %}
+              {% if attachment.file %}
+                {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
+              {% endif %}
+              {% if attachment.external_url %}
+                <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
+              {% endif %}
+              {% if attachment.note %}<small>{{ attachment.note }}</small>{% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </article>
+
+    <form class="upload-card review-card" method="post">
+      {% csrf_token %}
+      <h2>Оцінити</h2>
+      <label>
+        Бали
+        {{ form.points }}
+      </label>
+      <label>
+        Коментар викладача
+        {{ form.teacher_comment }}
+      </label>
+      <button class="primary-btn" type="submit">Зберегти оцінку</button>
+    </form>
+  </section>
+{% endblock %}

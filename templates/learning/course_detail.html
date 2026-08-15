@@ -1,0 +1,70 @@
+{% extends "learning/base.html" %}
+{% load learning_extras %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact course-hero">
+    <span class="eyebrow">{{ course.get_direction_display }}</span>
+    <h1>{{ course.title }}</h1>
+    
+  </section>
+
+  <section class="learning-path" aria-label="Навчальний маршрут курсу">
+    <header class="path-heading">
+      <span class="eyebrow light">Навчальний маршрут</span>
+      <h2>Уроки по порядку</h2>
+    </header>
+
+    {% for module in course.modules.all %}
+      <section class="path-module">
+        <header class="path-module-head">
+          <span class="module-number">{{ forloop.counter|stringformat:"02d" }}</span>
+          <div>
+            <small>Модуль {{ forloop.counter }}</small>
+            <h3>{{ module.title }}</h3>
+            {% if module.description %}<p>{{ module.description }}</p>{% endif %}
+          </div>
+        </header>
+
+        <div class="path-lessons">
+          {% for lesson in module.lessons.all %}
+            {% if lesson.is_available %}
+              <a class="path-lesson {% if progress|dict_get:lesson.id %}is-complete{% endif %}" href="{{ lesson.get_absolute_url }}">
+                <span class="path-marker">{{ lesson.order|stringformat:"02d" }}</span>
+                <span class="path-lesson-copy">
+                  <small>Урок {{ lesson.order }}</small>
+                  <strong>{{ lesson.title }}</strong>
+                  {% if lesson.summary %}<span>{{ lesson.summary|truncatechars:130 }}</span>{% endif %}
+                  <span class="lesson-tags">
+                    {% if lesson.assignments.all %}<b>Домашнє завдання</b>{% endif %}
+                    {% if lesson.quizzes.all %}<b>Тест</b>{% endif %}
+                  </span>
+                </span>
+                <span class="path-status">
+                  {% if progress|dict_get:lesson.id %}Пройдено{% else %}Відкрити урок{% endif %}
+                </span>
+              </a>
+            {% else %}
+              <div class="path-lesson is-locked">
+                <span class="path-marker">{{ lesson.order|stringformat:"02d" }}</span>
+                <span class="path-lesson-copy">
+                  <small>Урок {{ lesson.order }}</small>
+                  <strong>{{ lesson.title }}</strong>
+                </span>
+                <span class="path-status">Скоро</span>
+              </div>
+            {% endif %}
+          {% empty %}
+            <p class="muted path-empty">Уроки ще не додані.</p>
+          {% endfor %}
+        </div>
+      </section>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Модулі ще не додані</h2>
+        <p>Створи модулі й уроки в Django admin.</p>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

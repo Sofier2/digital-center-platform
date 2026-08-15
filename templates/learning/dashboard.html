@@ -1,0 +1,84 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Мій кабінет{% endblock %}
+
+{% block content %}
+  <section class="student-home-hero">
+    <div class="student-identity">
+      <div class="student-avatar" aria-hidden="true">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="">
+        {% else %}
+          <span>{{ user.first_name|default:user.username|first|upper }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <span class="eyebrow">Мій прогрес</span>
+        <h1>Привіт, {{ user.first_name|default:user.username }}</h1>
+      </div>
+    </div>
+    <a class="secondary-btn profile-edit-link" href="{% url 'profile_settings' %}">Оновити профіль</a>
+  </section>
+
+  
+  <section class="course-grid" aria-label="Курси">
+    {% for course in courses %}
+      <article class="course-card">
+        
+        <h2>{{ course.title }}</h2>
+       
+      
+        <a class="primary-btn" href="{{ course.get_absolute_url }}">Відкрити курс</a>
+      </article>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Курсів поки немає</h2>
+        <p>Викладач ще не призначив курс у твій кабінет. Коли доступ відкриють, курс з'явиться тут.</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% if words_to_learn %}
+    <section class="word-cabinet">
+      <div class="section-title">
+        <span class="eyebrow light">Мій словник</span>
+        <h2>Слова, які треба повторити</h2>
+      </div>
+      <div class="word-review-grid">
+        {% for item in words_to_learn %}
+          <article class="word-review-card status-{{ item.status }}">
+            <div>
+              <strong>{{ item.word.word }}</strong>
+              {% if item.word.translation %}<span>{{ item.word.translation }}</span>{% endif %}
+            </div>
+            <small>{{ item.word.vocabulary_set.lesson.title }}</small>
+            <em>{{ item.get_status_display }}</em>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if submissions %}
+    <section class="student-results">
+      <div class="section-title">
+        <span class="eyebrow light">Мої роботи</span>
+        <h2>Останні здачі та оцінки</h2>
+      </div>
+      <div class="result-list">
+        {% for submission in submissions %}
+          <article class="result-card">
+            <strong>{{ submission.assignment.title }}</strong>
+            <span>{{ submission.assignment.lesson.title }}</span>
+            {% if submission.points != None %}
+              <b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>
+              {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+            {% else %}
+              <em>Очікує перевірки</em>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

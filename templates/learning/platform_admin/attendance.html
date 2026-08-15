@@ -1,0 +1,32 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Відвідуваність{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact admin-hero">
+    <span class="eyebrow">Журнал</span>
+    <h1>Відвідуваність дітей</h1>
+    <p>Створіть заняття, оберіть курс — і позначте присутність усіх зарахованих учнів.</p>
+  </section>
+  <section class="admin-panel">
+    <div class="section-title"><h2>Нове заняття</h2></div>
+    <form method="post" class="assign-form">
+      {% csrf_token %}
+      <select name="course_id" required><option value="">Оберіть курс</option>{% for course in courses %}<option value="{{ course.id }}">{{ course.title }}</option>{% endfor %}</select>
+      <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+      <input name="title" placeholder="Тема заняття (необов'язково)">
+      <button type="submit" class="primary-btn">Відкрити журнал</button>
+    </form>
+  </section>
+  <section class="admin-panel">
+    <div class="section-title"><h2>Попередні заняття</h2></div>
+    <div class="table-list">
+      {% for session in sessions %}
+        <div class="table-row rich">
+          <a href="{% url 'edit_attendance' session.id %}"><strong>{{ session.course.title }}</strong><span>{{ session.date|date:'d.m.Y' }}{% if session.title %} · {{ session.title }}{% endif %}</span><b>{{ session.students_total }} учнів</b></a>
+          <form method="post" action="{% url 'delete_attendance' session.id %}" onsubmit="return confirm('Видалити цей запис заняття та всі відмітки?');">{% csrf_token %}<button type="submit" class="secondary-btn">Видалити</button></form>
+        </div>
+      {% empty %}<p class="muted">Журнал поки що порожній.</p>{% endfor %}
+    </div>
+  </section>
+{% endblock %}

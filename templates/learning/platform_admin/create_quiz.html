@@ -1,0 +1,67 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Новий тест{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact admin-hero">
+    <span class="eyebrow">Тестування</span>
+    <h1>Створити тест</h1>
+    <p>Додайте питання та варіанти відповідей на одній сторінці. Позначте правильний варіант у кожному питанні.</p>
+  </section>
+
+  <section class="admin-panel">
+    <form method="post" class="review-form" id="quiz-builder">
+      {% csrf_token %}
+      <p><label>Урок<select name="lesson_id" required><option value="">Оберіть урок</option>{% for lesson in lessons %}<option value="{{ lesson.id }}">{{ lesson.module.course.title }} · {{ lesson.title }}</option>{% endfor %}</select></label></p>
+      <p><label>Назва тесту<input name="title" required placeholder="Наприклад: Повторення Unit 3"></label></p>
+      <p><label>Короткий опис (необов'язково)<textarea name="description" rows="3"></textarea></label></p>
+      <p><label>Максимум балів<input name="max_points" type="number" min="1" value="100"></label></p>
+      <p><label>Прохідний відсоток<input name="passing_percent" type="number" min="0" max="100" value="60"></label></p>
+      <p><label><input type="checkbox" name="is_published" checked> Одразу показати учням</label></p>
+      <p><label><input type="checkbox" name="allow_retakes" checked> Дозволити повторне проходження</label></p>
+
+      <div id="questions"></div>
+      <button type="button" class="secondary-btn" id="add-question">+ Додати питання</button>
+      <button type="submit" class="primary-btn">Зберегти тест</button>
+    </form>
+  </section>
+
+  <template id="question-template">
+    <article class="student-admin-card quiz-question-builder">
+      <div class="student-head"><strong>Питання <span class="question-number"></span></strong><button type="button" class="secondary-btn remove-question">Прибрати</button></div>
+      <p><label>Текст питання<textarea class="question-text" rows="2" required></textarea></label></p>
+      <div class="choice-list"></div>
+      <button type="button" class="secondary-btn add-choice">+ Варіант відповіді</button>
+    </article>
+  </template>
+  <script>
+    const questions = document.querySelector('#questions');
+    const template = document.querySelector('#question-template');
+    function refresh() {
+      [...questions.children].forEach((card, index) => {
+        card.querySelector('.question-number').textContent = index + 1;
+        card.querySelector('.question-text').name = 'question_text';
+        const list = card.querySelector('.choice-list');
+        [...list.children].forEach((row, choiceIndex) => {
+          row.querySelector('input[type=text]').name = `choices_${index}`;
+          row.querySelector('input[type=radio]').name = `correct_${index}`;
+          row.querySelector('input[type=radio]').value = choiceIndex;
+        });
+      });
+    }
+    function addChoice(card, value = '') {
+      const row = document.createElement('p');
+      row.innerHTML = `<label><input type="radio" required> Правильна</label> <input type="text" required placeholder="Варіант відповіді" value="${value}"> <button type="button" class="secondary-btn remove-choice">×</button>`;
+      row.querySelector('.remove-choice').onclick = () => { row.remove(); refresh(); };
+      card.querySelector('.choice-list').append(row);
+    }
+    function addQuestion() {
+      const card = template.content.firstElementChild.cloneNode(true);
+      card.querySelector('.add-choice').onclick = () => { addChoice(card); refresh(); };
+      card.querySelector('.remove-question').onclick = () => { card.remove(); refresh(); };
+      addChoice(card); addChoice(card); questions.append(card); refresh();
+    }
+    document.querySelector('#add-question').onclick = addQuestion;
+    addQuestion();
+  </script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Моя відвідуваність{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">Мій журнал</span>
+    <h1>Моя відвідуваність</h1>
+    <p>Тут відображаються відмітки викладача за кожним заняттям.</p>
+  </section>
+  <section class="admin-panel">
+    <div class="table-list">
+      {% for record in records %}
+        <article class="table-row rich"><strong>{{ record.session.course.title }}</strong><span>{{ record.session.date|date:"d.m.Y" }}{% if record.session.title %} · {{ record.session.title }}{% endif %}</span><b>{{ record.get_status_display }}</b>{% if record.note %}<small>{{ record.note }}</small>{% endif %}</article>
+      {% empty %}<p class="muted">Викладач ще не додав відміток відвідуваності.</p>{% endfor %}
+    </div>
+  </section>
+{% endblock %}

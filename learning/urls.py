@@ -1,0 +1,29 @@
+from django.urls import path
+
+from . import views
+
+
+urlpatterns = [
+    path("", views.dashboard, name="dashboard"),
+    path("profile/", views.profile_settings, name="profile_settings"),
+    path("schedule/", views.schedule, name="schedule"),
+    path("attendance/", views.my_attendance, name="my_attendance"),
+    path("parents/", views.parent_dashboard, name="parent_dashboard"),
+    path("courses/<int:pk>/", views.course_detail, name="course_detail"),
+    path("lessons/<int:pk>/", views.lesson_detail, name="lesson_detail"),
+    path("lessons/<int:pk>/completion/", views.toggle_lesson_completion, name="toggle_lesson_completion"),
+    path("quizzes/<int:pk>/", views.take_quiz, name="take_quiz"),
+    path("quiz-results/<int:pk>/", views.quiz_result, name="quiz_result"),
+    path("words/<int:pk>/status/", views.update_word_status, name="update_word_status"),
+    path("assignments/<int:pk>/submit/", views.submit_assignment, name="submit_assignment"),
+    path("manage/", views.platform_admin_dashboard, name="platform_admin_dashboard"),
+    path("manage/courses/", views.platform_admin_courses, name="platform_admin_courses"),
+    path("manage/students/", views.platform_admin_students, name="platform_admin_students"),
+    path("manage/submissions/", views.platform_admin_submissions, name="platform_admin_submissions"),
+    path("manage/quizzes/", views.platform_admin_quizzes, name="platform_admin_quizzes"),
+    path("manage/quizzes/create/", views.create_quiz, name="create_quiz"),
+    path("manage/attendance/", views.platform_admin_attendance, name="platform_admin_attendance"),
+    path("manage/attendance/<int:pk>/", views.edit_attendance, name="edit_attendance"),
+    path("manage/attendance/<int:pk>/delete/", views.delete_attendance, name="delete_attendance"),
+    path("manage/submissions/<int:pk>/", views.review_submission, name="review_submission"),
+]

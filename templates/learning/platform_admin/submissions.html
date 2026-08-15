@@ -1,0 +1,30 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Перевірка робіт{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">Домашні роботи</span>
+    <h1>Перевірка здач</h1>
+    <p>Файли, коментарі, посилання, бали й фідбек в одному місці.</p>
+  </section>
+
+  <nav class="filter-tabs">
+    <a class="{% if status == 'pending' %}active{% endif %}" href="{% url 'platform_admin_submissions' %}">На перевірку</a>
+    <a class="{% if status == 'checked' %}active{% endif %}" href="{% url 'platform_admin_submissions' %}?status=checked">Оцінені</a>
+    <a class="{% if status == 'all' %}active{% endif %}" href="{% url 'platform_admin_submissions' %}?status=all">Усі</a>
+  </nav>
+
+  <section class="table-list admin-panel">
+    {% for submission in submissions %}
+      <a class="table-row rich" href="{% url 'review_submission' submission.id %}">
+        <span>{{ submission.student.get_full_name|default:submission.student.username }}</span>
+        <strong>{{ submission.assignment.lesson.module.course.title }} / {{ submission.assignment.title }}</strong>
+        <small>{{ submission.submitted_at }}</small>
+        {% if submission.points != None %}<b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>{% else %}<em>Перевірити</em>{% endif %}
+      </a>
+    {% empty %}
+      <p class="muted">Немає робіт у цьому списку.</p>
+    {% endfor %}
+  </section>
+{% endblock %}

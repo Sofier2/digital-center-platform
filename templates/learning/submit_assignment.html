@@ -1,0 +1,88 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Завантажити домашню роботу{% endblock %}
+
+{% block content %}
+  <section class="homework-submit-page">
+    <div class="submit-layout">
+      <aside class="assignment-brief">
+        <a class="back-link" href="{{ assignment.lesson.get_absolute_url }}">Назад до уроку</a>
+        <span class="eyebrow light">Домашнє завдання · {{ assignment.lesson.module.course.title }}</span>
+        <h1>{{ assignment.title }}</h1>
+        <div class="assignment-task">{{ assignment.task|linebreaks }}</div>
+        <div class="task-meta">
+          {% if assignment.due_date %}<span>Здати до {{ assignment.due_date }}</span>{% endif %}
+          <span>Максимум {{ assignment.max_points }} балів</span>
+        </div>
+        {% if submission and submission.points != None %}
+          <div class="submission-status is-graded">
+            <strong>Оцінка: {{ submission.points }}/{{ assignment.max_points }}</strong>
+            {% if submission.teacher_comment %}<p>{{ submission.teacher_comment }}</p>{% endif %}
+          </div>
+        {% elif submission %}
+          <div class="submission-status is-waiting"><strong>Роботу вже надіслано і вона очікує перевірки.</strong></div>
+        {% endif %}
+      </aside>
+
+    <form class="upload-card homework-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <header class="homework-form-head">
+        <span class="eyebrow light">Завантаження</span>
+        <h2>{% if submission %}Оновити домашню роботу{% else %}Надіслати домашню роботу{% endif %}</h2>
+        <p>Додай хоча б текст, файл або посилання. Можна прикріпити кілька скрінів і відео.</p>
+      </header>
+
+      {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+
+      <label class="upload-field">
+        <span class="field-number">01</span>
+        <span class="field-copy"><strong>Коментар або коротка відповідь</strong><small>Опиши, що виконано, або встав посилання на GitHub/проєкт.</small></span>
+        {{ form.answer }}
+        {% if form.answer.errors %}<small class="form-error">{{ form.answer.errors|striptags }}</small>{% endif %}
+      </label>
+
+      <label class="upload-field">
+        <span class="field-number">02</span>
+        <span class="field-copy"><strong>Основний файл</strong><small>Документ, архів, презентація або головний скрін роботи.</small></span>
+        {{ form.file }}
+        {% if form.file.errors %}<small class="form-error">{{ form.file.errors|striptags }}</small>{% endif %}
+      </label>
+
+      <label class="upload-field">
+        <span class="field-number">03</span>
+        <span class="field-copy"><strong>Додаткові файли</strong><small>Можна вибрати одразу кілька скрінів, файлів або відео.</small></span>
+        {{ form.extra_files }}
+        {% if form.extra_files.errors %}<small class="form-error">{{ form.extra_files.errors|striptags }}</small>{% endif %}
+      </label>
+
+      <label class="upload-field">
+        <span class="field-number">04</span>
+        <span class="field-copy"><strong>Посилання</strong><small>Кожне посилання вставляй з нового рядка.</small></span>
+        {{ form.extra_links }}
+        {% if form.extra_links.errors %}<small class="form-error">{{ form.extra_links.errors|striptags }}</small>{% endif %}
+      </label>
+
+      {% if submission.file or submission.attachments.all %}
+        <section class="current-uploads">
+          <h3>Вже завантажено</h3>
+          {% if submission.file %}
+            {% include "learning/partials/file_preview.html" with file=submission.file title="Основний файл" %}
+          {% endif %}
+          {% for attachment in submission.attachments.all %}
+            {% if attachment.file %}
+              {% include "learning/partials/file_preview.html" with file=attachment.file title=attachment.title %}
+            {% endif %}
+            {% if attachment.external_url %}
+              <a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>
+            {% endif %}
+          {% endfor %}
+        </section>
+      {% endif %}
+
+      <button class="primary-btn homework-submit-button" type="submit">
+        {% if submission %}Зберегти оновлену роботу{% else %}Надіслати домашню роботу{% endif %}
+      </button>
+    </form>
+    </div>
+  </section>
+{% endblock %}

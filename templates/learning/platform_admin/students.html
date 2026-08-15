@@ -1,0 +1,59 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Студенти{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">Студенти</span>
+    <h1>Доступи до курсів</h1>
+    <p>Призначай дитині тільки ті курси, які вона має бачити у своєму кабінеті.</p>
+  </section>
+
+  <section class="student-admin-list">
+    {% for student in students %}
+      <article class="student-admin-card">
+        <div class="student-head">
+          <div>
+            <strong>{{ student.get_full_name|default:student.username }}</strong>
+            <small>{{ student.email|default:"email не вказано" }}</small>
+          </div>
+          <span>{{ student.submissions.count }} робіт</span>
+        </div>
+
+        <div class="assigned-courses">
+          {% for enrollment in student.enrollments.all %}
+            {% if enrollment.is_active %}
+              <form method="post" class="course-chip-form">
+                {% csrf_token %}
+                <input type="hidden" name="student_id" value="{{ student.id }}">
+                <input type="hidden" name="course_id" value="{{ enrollment.course.id }}">
+                <input type="hidden" name="action" value="remove">
+                <button type="submit">{{ enrollment.course.title }} ×</button>
+              </form>
+            {% endif %}
+          {% empty %}
+            <p class="muted">Активних курсів ще немає.</p>
+          {% endfor %}
+        </div>
+
+        <form method="post" class="assign-form">
+          {% csrf_token %}
+          <input type="hidden" name="student_id" value="{{ student.id }}">
+          <input type="hidden" name="action" value="add">
+          <select name="course_id" required>
+            <option value="">Обрати курс</option>
+            {% for course in all_courses %}
+              <option value="{{ course.id }}">{{ course.title }}</option>
+            {% endfor %}
+          </select>
+          <button class="primary-btn" type="submit">Призначити</button>
+        </form>
+      </article>
+    {% empty %}
+      <article class="empty-state">
+        <h2>Учнів ще немає</h2>
+        <p>Створи користувачів-учнів у Django admin, після цього вони з'являться тут.</p>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}
