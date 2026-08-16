@@ -7,12 +7,12 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.utils import timezone
 
-from .models import Assignment, Lesson, LessonProgress, ScheduleEntry, ScheduleException, Submission, TelegramAccount
+from .models import Assignment, Lesson, LessonProgress, ScheduleEntry, ScheduleException, TelegramAccount
 
 
 API_URL = "https://api.telegram.org/bot{token}/{method}"
 MENU = {
-    "keyboard": [["📝 Домашні завдання", "📚 Усі уроки · чекліст"], ["📅 Мій розклад", "ℹ️ Допомога"]],
+    "keyboard": [["📚 Перелік усіх завдань", "📅 Мій розклад"], ["ℹ️ Допомога"]],
     "resize_keyboard": True,
     "is_persistent": True,
 }
@@ -84,15 +84,18 @@ def _lesson_checklist(user):
     done_lesson_ids = set(
         LessonProgress.objects.filter(student=user, is_done=True, lesson_id__in=[lesson.id for lesson in lessons]).values_list("lesson_id", flat=True)
     )
-    lines = ["📚 Чекліст усіх уроків", "✅ — пройдено · ⬜ — ще не позначено"]
+    lessons = [lesson for lesson in lessons if lesson.id not in done_lesson_ids]
+    if not lessons:
+        return ["✅ Усі уроки позначені як пройдені. Чудова робота!"]
+
+    lines = ["📚 Незроблені завдання", "⬜ — урок ще не позначено як пройдений"]
     current_course = None
     for lesson in lessons:
         course_title = lesson.module.course.title
         if course_title != current_course:
             lines.append(f"\n{course_title}")
             current_course = course_title
-        status = "✅" if lesson.id in done_lesson_ids else "⬜"
-        lines.append(f"{status} Урок {lesson.order}: {lesson.title}\n{settings.PLATFORM_BASE_URL}{lesson.get_absolute_url()}")
+        lines.append(f"⬜ Урок {lesson.order}: {lesson.title}\n{settings.PLATFORM_BASE_URL}{lesson.get_absolute_url()}")
     return lines
 
 
@@ -110,18 +113,6 @@ def _send_lesson_checklist(chat_id, user):
         chunks.append(current)
     for index, chunk in enumerate(chunks):
         send(chat_id, chunk, reply_markup=MENU if index == len(chunks) - 1 else None)
-
-
-def _homework(user):
-    submitted_ids = Submission.objects.filter(student=user).values_list("assignment_id", flat=True)
-    tasks = Assignment.objects.filter(lesson__is_available=True, lesson__module__course__enrollments__student=user, lesson__module__course__enrollments__is_active=True).exclude(id__in=submitted_ids).select_related("lesson__module__course").distinct().order_by("due_date", "id")
-    if not tasks:
-        return "✅ Незданих домашніх завдань немає."
-    lines = ["📝 Нездані домашні завдання:"]
-    for task in tasks[:12]:
-        deadline = f" · до {task.due_date:%d.%m}" if task.due_date else ""
-        lines.append(f"• {task.title}{deadline}\n{settings.PLATFORM_BASE_URL}/assignments/{task.id}/submit/")
-    return "\n\n".join(lines)
 
 
 def _schedule(user):
@@ -188,10 +179,8 @@ def respond(message):
     normalized = text.casefold()
     if command == "/menu" or "допомог" in normalized or normalized == "help":
         return send_menu(chat_id)
-    if command in {"/lessons", "/checklist"} or "урок" in normalized or normalized in {"lessons", "checklist"}:
+    if command in {"/lessons", "/checklist", "/tasks"} or "урок" in normalized or "перелік" in normalized or normalized in {"lessons", "checklist", "tasks"}:
         return _send_lesson_checklist(chat_id, account.user)
-    if command == "/homework" or "домаш" in normalized or normalized == "homework":
-        return send(chat_id, _homework(account.user), reply_markup=MENU)
     if command == "/schedule" or "розклад" in normalized or normalized == "schedule":
         return send(chat_id, _schedule(account.user), reply_markup=MENU)
     return send_menu(chat_id, "Оберіть дію кнопкою нижче.")
