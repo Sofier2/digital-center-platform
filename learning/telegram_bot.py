@@ -7,12 +7,12 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.utils import timezone
 
-from .models import Assignment, Lesson, ScheduleEntry, ScheduleException, Submission, TelegramAccount
+from .models import Assignment, Lesson, LessonProgress, ScheduleEntry, ScheduleException, Submission, TelegramAccount
 
 
 API_URL = "https://api.telegram.org/bot{token}/{method}"
 MENU = {
-    "keyboard": [["📝 Домашні завдання", "📅 Мій розклад"], ["ℹ️ Допомога"]],
+    "keyboard": [["📝 Домашні завдання", "📚 Усі уроки · чекліст"], ["📅 Мій розклад", "ℹ️ Допомога"]],
     "resize_keyboard": True,
     "is_persistent": True,
 }
@@ -67,14 +67,49 @@ def _account(chat_id):
     return TelegramAccount.objects.select_related("user").filter(chat_id=chat_id).first()
 
 
-def _lessons(user):
-    lessons = Lesson.objects.filter(is_available=True, module__course__enrollments__student=user, module__course__enrollments__is_active=True).select_related("module__course").distinct().order_by("module__course__title", "module__order", "order")
+def _lesson_checklist(user):
+    lessons = list(
+        Lesson.objects.filter(
+            is_available=True,
+            module__course__enrollments__student=user,
+            module__course__enrollments__is_active=True,
+        )
+        .select_related("module__course")
+        .distinct()
+        .order_by("module__course__title", "module__order", "order")
+    )
     if not lessons:
-        return "📚 Активних уроків поки немає."
-    lines = ["📚 Мої уроки:"]
-    for lesson in lessons[:12]:
-        lines.append(f"• {lesson.module.course.title}: {lesson.title}\n{settings.PLATFORM_BASE_URL}{lesson.get_absolute_url()}")
-    return "\n\n".join(lines)
+        return ["📚 Активних уроків поки немає."]
+
+    done_lesson_ids = set(
+        LessonProgress.objects.filter(student=user, is_done=True, lesson_id__in=[lesson.id for lesson in lessons]).values_list("lesson_id", flat=True)
+    )
+    lines = ["📚 Чекліст усіх уроків", "✅ — пройдено · ⬜ — ще не позначено"]
+    current_course = None
+    for lesson in lessons:
+        course_title = lesson.module.course.title
+        if course_title != current_course:
+            lines.append(f"\n{course_title}")
+            current_course = course_title
+        status = "✅" if lesson.id in done_lesson_ids else "⬜"
+        lines.append(f"{status} Урок {lesson.order}: {lesson.title}\n{settings.PLATFORM_BASE_URL}{lesson.get_absolute_url()}")
+    return lines
+
+
+def _send_lesson_checklist(chat_id, user):
+    """Telegram allows up to 4096 characters per message, so split long checklists."""
+    chunks, current = [], ""
+    for line in _lesson_checklist(user):
+        candidate = f"{current}\n\n{line}" if current else line
+        if len(candidate) > 3800 and current:
+            chunks.append(current)
+            current = line
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    for index, chunk in enumerate(chunks):
+        send(chat_id, chunk, reply_markup=MENU if index == len(chunks) - 1 else None)
 
 
 def _homework(user):
@@ -153,8 +188,8 @@ def respond(message):
     normalized = text.casefold()
     if command == "/menu" or "допомог" in normalized or normalized == "help":
         return send_menu(chat_id)
-    if command == "/lessons" or "урок" in normalized or normalized == "lessons":
-        return send(chat_id, _lessons(account.user), reply_markup=MENU)
+    if command in {"/lessons", "/checklist"} or "урок" in normalized or normalized in {"lessons", "checklist"}:
+        return _send_lesson_checklist(chat_id, account.user)
     if command == "/homework" or "домаш" in normalized or normalized == "homework":
         return send(chat_id, _homework(account.user), reply_markup=MENU)
     if command == "/schedule" or "розклад" in normalized or normalized == "schedule":
