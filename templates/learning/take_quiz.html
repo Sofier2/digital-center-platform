@@ -40,7 +40,7 @@
       {% if question_fields %}
         <header class="quiz-questions-head">
           <span class="eyebrow light">Питання</span>
-          <h2>Обери правильні відповіді</h2>
+          <h2>Виконай завдання</h2>
           {% if quiz.reading_text %}<a href="#reading-text">Повернутися до тексту</a>{% endif %}
         </header>
         {% for item in question_fields %}
@@ -52,6 +52,12 @@
                 <span class="support-label">Уривок до питання</span>
                 <div>{{ item.question.context_text|linebreaks }}</div>
               </div>
+            {% endif %}
+
+            {% if item.question.image_file or item.question.image_url %}
+              <figure class="quiz-support question-image">
+                <img src="{% if item.question.image_file %}{{ item.question.image_file.url }}{% else %}{{ item.question.image_url }}{% endif %}" alt="Зображення до питання {{ forloop.counter }}">
+              </figure>
             {% endif %}
 
             {% if item.question.audio_file or item.question.audio_url %}
@@ -70,7 +76,19 @@
               </div>
             {% endif %}
 
-            <div class="choice-list">{{ item.field }}</div>
+            {% if item.question.question_type == 'drag' %}
+              <div class="drag-answer" data-drag-answer>
+                <input type="hidden" name="{{ item.field.html_name }}" id="{{ item.field.id_for_label }}" data-drag-input>
+                <button class="drag-drop-slot" type="button" data-drop-slot>Перетягни сюди відповідь</button>
+                <div class="drag-options" aria-label="Варіанти відповідей">
+                  {% for option in item.question.drag_option_list %}
+                    <button class="drag-option" type="button" draggable="true" data-drag-option data-value="{{ option }}">{{ option }}</button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% else %}
+              <div class="choice-list {% if item.question.question_type == 'text' %}text-answer-field{% endif %}">{{ item.field }}</div>
+            {% endif %}
             {% if item.field.errors %}<small class="form-error">{{ item.field.errors|striptags }}</small>{% endif %}
           </fieldset>
         {% endfor %}
@@ -83,4 +101,26 @@
       {% endif %}
     </form>
   </section>
+  <script>
+    document.querySelectorAll('[data-drag-answer]').forEach((answer) => {
+      const input = answer.querySelector('[data-drag-input]');
+      const slot = answer.querySelector('[data-drop-slot]');
+      const choose = (option) => {
+        input.value = option.dataset.value;
+        slot.textContent = option.dataset.value;
+        answer.querySelectorAll('[data-drag-option]').forEach((item) => item.classList.toggle('is-selected', item === option));
+      };
+      answer.querySelectorAll('[data-drag-option]').forEach((option) => {
+        option.addEventListener('click', () => choose(option));
+        option.addEventListener('dragstart', (event) => event.dataTransfer.setData('text/plain', option.dataset.value));
+      });
+      slot.addEventListener('dragover', (event) => event.preventDefault());
+      slot.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const value = event.dataTransfer.getData('text/plain');
+        const option = [...answer.querySelectorAll('[data-drag-option]')].find((item) => item.dataset.value === value);
+        if (option) choose(option);
+      });
+    });
+  </script>
 {% endblock %}

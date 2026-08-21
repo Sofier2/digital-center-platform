@@ -402,11 +402,21 @@ class Quiz(models.Model):
 
 
 class QuizQuestion(models.Model):
+    class Type(models.TextChoices):
+        CHOICE = "choice", "Обрати правильну відповідь"
+        TEXT = "text", "Вписати відповідь / заповнити пропуск"
+        DRAG = "drag", "Перетягнути відповідь у пропуск"
+
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name="тест")
+    question_type = models.CharField("тип питання", max_length=16, choices=Type.choices, default=Type.CHOICE)
     context_text = models.TextField("текст або уривок до питання", blank=True)
     audio_file = models.FileField("аудіо для listening", upload_to="quizzes/audio/", blank=True)
     audio_url = models.URLField("пряме посилання на аудіо", blank=True)
+    image_file = models.ImageField("зображення до питання", upload_to="quizzes/images/", blank=True)
+    image_url = models.URLField("посилання на зображення", blank=True)
     text = models.TextField("питання")
+    correct_answer = models.CharField("правильна текстова відповідь", max_length=255, blank=True)
+    drag_options = models.TextField("варіанти для перетягування", blank=True, help_text="Кожен варіант з нового рядка")
     explanation = models.TextField("пояснення після відповіді", blank=True)
     order = models.PositiveIntegerField("порядок", default=1)
     is_active = models.BooleanField("активне", default=True)
@@ -418,6 +428,10 @@ class QuizQuestion(models.Model):
 
     def __str__(self):
         return self.text[:80]
+
+    @property
+    def drag_option_list(self):
+        return [option.strip() for option in self.drag_options.splitlines() if option.strip()]
 
 
 class QuizChoice(models.Model):
@@ -502,6 +516,7 @@ class QuizAnswer(models.Model):
     attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name="answers", verbose_name="спроба")
     question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="answers", verbose_name="питання")
     selected_choice = models.ForeignKey(QuizChoice, on_delete=models.SET_NULL, related_name="answers", verbose_name="обрана відповідь", blank=True, null=True)
+    text_answer = models.CharField("текстова відповідь учня", max_length=255, blank=True)
     is_correct = models.BooleanField("правильно", default=False)
 
     class Meta:

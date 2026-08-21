@@ -319,7 +319,7 @@ class LessonReminderAdmin(admin.ModelAdmin):
 class QuizQuestionInline(admin.StackedInline):
     model = QuizQuestion
     extra = 1
-    fields = ("context_text", "audio_file", "audio_url", "text", "explanation", "order", "is_active")
+    fields = ("question_type", "text", "correct_answer", "drag_options", "context_text", "image_file", "image_url", "audio_file", "audio_url", "explanation", "order", "is_active")
 
 
 @admin.register(Quiz)
@@ -366,11 +366,12 @@ class AttendanceRecordAdmin(admin.ModelAdmin):
 
 @admin.register(QuizQuestion)
 class QuizQuestionAdmin(admin.ModelAdmin):
-    list_display = ("text", "quiz", "order", "is_active")
+    list_display = ("text", "question_type", "quiz", "order", "is_active")
     list_filter = ("quiz__lesson__module__course", "is_active")
     search_fields = ("text", "context_text", "quiz__title")
     fieldsets = (
-        ("Питання", {"fields": ("quiz", "text", "context_text")}),
+        ("Питання", {"fields": ("quiz", "question_type", "text", "correct_answer", "drag_options", "context_text"), "description": "Для текстового типу заповніть правильну відповідь. Для перетягування додайте варіанти, кожен з нового рядка; у тексті питання можна використати ___ для пропуску."}),
+        ("Зображення", {"fields": ("image_file", "image_url"), "description": "Завантажте зображення або вставте пряме посилання на нього."}),
         ("Listening", {"fields": ("audio_file", "audio_url"), "description": "Завантаж аудіофайл або встав пряме посилання на MP3/M4A/WAV."}),
         ("Після відповіді", {"fields": ("explanation",)}),
         ("Налаштування", {"fields": ("order", "is_active")}),
@@ -388,8 +389,8 @@ class QuizChoiceAdmin(admin.ModelAdmin):
 class QuizAnswerInline(admin.TabularInline):
     model = QuizAnswer
     extra = 0
-    fields = ("question", "selected_choice", "is_correct")
-    readonly_fields = ("question", "selected_choice", "is_correct")
+    fields = ("question", "selected_choice", "text_answer", "is_correct")
+    readonly_fields = ("question", "selected_choice", "text_answer", "is_correct")
     can_delete = False
 
 

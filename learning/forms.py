@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Profile, Submission
+from .models import Profile, QuizQuestion, Submission
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -79,10 +79,18 @@ class QuizTakeForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.questions = list(questions or [])
         for question in self.questions:
-            choices = [(choice.id, choice.text) for choice in question.choices.all()]
-            self.fields[f"question_{question.id}"] = forms.ChoiceField(
-                label=question.text,
-                choices=choices,
-                widget=forms.RadioSelect,
-                required=True,
-            )
+            if question.question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG}:
+                self.fields[f"question_{question.id}"] = forms.CharField(
+                    label=question.text,
+                    max_length=255,
+                    required=True,
+                    widget=forms.TextInput(attrs={"placeholder": "Впиши відповідь"}),
+                )
+            else:
+                choices = [(choice.id, choice.text) for choice in question.choices.all()]
+                self.fields[f"question_{question.id}"] = forms.ChoiceField(
+                    label=question.text,
+                    choices=choices,
+                    widget=forms.RadioSelect,
+                    required=True,
+                )

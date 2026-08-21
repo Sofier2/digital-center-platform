@@ -290,7 +290,11 @@ def take_quiz(request, pk):
         return redirect("dashboard")
 
     latest_attempt = QuizAttempt.objects.filter(quiz=quiz, student=request.user).order_by("-completed_at").first()
-    questions = [question for question in quiz.questions.all() if question.is_active and question.choices.exists()]
+    questions = [
+        question
+        for question in quiz.questions.all()
+        if question.is_active and (question.question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG} or question.choices.exists())
+    ]
     if latest_attempt and not quiz.allow_retakes and request.method != "POST":
         return render(request, "learning/quiz_result.html", {"quiz": quiz, "attempt": latest_attempt})
 
@@ -301,12 +305,17 @@ def take_quiz(request, pk):
         if form.is_valid():
             correct_count = 0
             selected_by_question = {}
+            text_answers = {}
             for question in questions:
-                selected_id = int(form.cleaned_data[f"question_{question.id}"])
-                selected_choice = next((choice for choice in question.choices.all() if choice.id == selected_id), None)
-                selected_by_question[question.id] = selected_choice
-                if selected_choice and selected_choice.is_correct:
-                    correct_count += 1
+                answer = form.cleaned_data[f"question_{question.id}"]
+                if question.question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG}:
+                    text_answers[question.id] = answer
+                    correct_count += int(" ".join(answer.casefold().split()) == " ".join(question.correct_answer.casefold().split()))
+                else:
+                    selected_id = int(answer)
+                    selected_choice = next((choice for choice in question.choices.all() if choice.id == selected_id), None)
+                    selected_by_question[question.id] = selected_choice
+                    correct_count += int(bool(selected_choice and selected_choice.is_correct))
 
             total_count = len(questions)
             score_percent = round((correct_count / total_count) * 100) if total_count else 0
@@ -325,7 +334,8 @@ def take_quiz(request, pk):
                     attempt=attempt,
                     question=question,
                     selected_choice=selected_choice,
-                    is_correct=bool(selected_choice and selected_choice.is_correct),
+                    text_answer=text_answers.get(question.id, ""),
+                    is_correct=(" ".join(text_answers[question.id].casefold().split()) == " ".join(question.correct_answer.casefold().split())) if question.question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG} else bool(selected_choice and selected_choice.is_correct),
                 )
             LessonProgress.objects.update_or_create(
                 student=request.user,
@@ -513,17 +523,31 @@ def create_quiz(request):
                 created = 0
                 for index, text in enumerate(question_texts):
                     text = text.strip()
+                    question_type = request.POST.getlist("question_type")[index] if index < len(request.POST.getlist("question_type")) else QuizQuestion.Type.CHOICE
                     choices = [item.strip() for item in request.POST.getlist(f"choices_{index}") if item.strip()]
                     correct = request.POST.get(f"correct_{index}", "0")
-                    if not text or len(choices) < 2:
+                    correct_answer = request.POST.getlist("correct_answer")[index].strip() if index < len(request.POST.getlist("correct_answer")) else ""
+                    drag_options = request.POST.getlist("drag_options")[index].strip() if index < len(request.POST.getlist("drag_options")) else ""
+                    if not text or (question_type == QuizQuestion.Type.CHOICE and len(choices) < 2) or (question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG} and not correct_answer) or (question_type == QuizQuestion.Type.DRAG and len([item for item in drag_options.splitlines() if item.strip()]) < 2):
                         continue
-                    question = QuizQuestion.objects.create(quiz=quiz, text=text, order=created + 1)
-                    for choice_index, choice in enumerate(choices):
-                        QuizChoice.objects.create(question=question, text=choice, order=choice_index + 1, is_correct=str(choice_index) == correct)
+                    question = QuizQuestion.objects.create(
+                        quiz=quiz,
+                        text=text,
+                        question_type=question_type,
+                        correct_answer=correct_answer,
+                        context_text=request.POST.get(f"context_{index}", "").strip(),
+                        audio_url=request.POST.get(f"audio_url_{index}", "").strip(),
+                        image_url=request.POST.get(f"image_url_{index}", "").strip(),
+                        drag_options=drag_options,
+                        order=created + 1,
+                    )
+                    if question_type == QuizQuestion.Type.CHOICE:
+                        for choice_index, choice in enumerate(choices):
+                            QuizChoice.objects.create(question=question, text=choice, order=choice_index + 1, is_correct=str(choice_index) == correct)
                     created += 1
                 if not created:
                     quiz.delete()
-                    messages.error(request, "Кожне питання має містити щонайменше два варіанти відповіді.")
+                    messages.error(request, "Додайте питання: два варіанти для вибору або правильну текстову відповідь для пропуску.")
                 else:
                     messages.success(request, f"Тест «{quiz.title}» створено: {created} питань.")
                     return redirect("platform_admin_quizzes")

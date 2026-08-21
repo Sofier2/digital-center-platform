@@ -31,7 +31,7 @@
             <div class="result-context">{{ answer.question.context_text|linebreaks }}</div>
           {% endif %}
           <strong>{{ forloop.counter }}. {{ answer.question.text }}</strong>
-          <p>Твоя відповідь: {{ answer.selected_choice.text|default:"Не обрано" }}</p>
+          <p>Твоя відповідь: {% if answer.question.question_type == 'text' or answer.question.question_type == 'drag' %}{{ answer.text_answer|default:"Не введено" }}{% else %}{{ answer.selected_choice.text|default:"Не обрано" }}{% endif %}</p>
           {% if answer.question.explanation %}<small>{{ answer.question.explanation }}</small>{% endif %}
         </article>
       {% empty %}

@@ -6,7 +6,7 @@
   <section class="page-hero compact admin-hero">
     <span class="eyebrow">Тестування</span>
     <h1>Створити тест</h1>
-    <p>Додайте питання та варіанти відповідей на одній сторінці. Позначте правильний варіант у кожному питанні.</p>
+    <p>Додайте питання з вибором відповіді або заповненням пропуску. Для listening вставте пряме посилання на аудіо.</p>
   </section>
 
   <section class="admin-panel">
@@ -29,7 +29,13 @@
   <template id="question-template">
     <article class="student-admin-card quiz-question-builder">
       <div class="student-head"><strong>Питання <span class="question-number"></span></strong><button type="button" class="secondary-btn remove-question">Прибрати</button></div>
+      <p><label>Тип завдання<select class="question-type"><option value="choice">Обрати правильну відповідь</option><option value="text">Вписати відповідь / заповнити пропуск</option><option value="drag">Перетягнути відповідь у пропуск</option></select></label></p>
       <p><label>Текст питання<textarea class="question-text" rows="2" required></textarea></label></p>
+      <p><label>Уривок або підказка (необов'язково)<textarea class="context-text" rows="2"></textarea></label></p>
+      <p><label>Посилання на аудіо для listening (необов'язково)<input class="audio-url" type="url" placeholder="https://...mp3"></label></p>
+      <p><label>Посилання на зображення (необов'язково)<input class="image-url" type="url" placeholder="https://...jpg або .png"></label></p>
+      <p class="text-answer"><label>Правильна текстова відповідь<input class="correct-text" type="text" placeholder="Наприклад: went"></label></p>
+      <p class="drag-options-field"><label>Слова для перетягування — кожне з нового рядка<textarea class="drag-options-text" rows="3" placeholder="went&#10;go&#10;going"></textarea></label></p>
       <div class="choice-list"></div>
       <button type="button" class="secondary-btn add-choice">+ Варіант відповіді</button>
     </article>
@@ -41,13 +47,32 @@
       [...questions.children].forEach((card, index) => {
         card.querySelector('.question-number').textContent = index + 1;
         card.querySelector('.question-text').name = 'question_text';
+        card.querySelector('.question-type').name = 'question_type';
+        card.querySelector('.context-text').name = `context_${index}`;
+        card.querySelector('.audio-url').name = `audio_url_${index}`;
+        card.querySelector('.image-url').name = `image_url_${index}`;
+        card.querySelector('.correct-text').name = 'correct_answer';
+        card.querySelector('.drag-options-text').name = 'drag_options';
         const list = card.querySelector('.choice-list');
         [...list.children].forEach((row, choiceIndex) => {
           row.querySelector('input[type=text]').name = `choices_${index}`;
           row.querySelector('input[type=radio]').name = `correct_${index}`;
           row.querySelector('input[type=radio]').value = choiceIndex;
         });
+        updateType(card);
       });
+    }
+    function updateType(card) {
+      const type = card.querySelector('.question-type').value;
+      const isTypedAnswer = type === 'text' || type === 'drag';
+      const isDrag = type === 'drag';
+      card.querySelector('.text-answer').hidden = !isTypedAnswer;
+      card.querySelector('.correct-text').required = isTypedAnswer;
+      card.querySelector('.drag-options-field').hidden = !isDrag;
+      card.querySelector('.drag-options-text').required = isDrag;
+      card.querySelector('.choice-list').hidden = type !== 'choice';
+      card.querySelector('.add-choice').hidden = type !== 'choice';
+      card.querySelectorAll('.choice-list input').forEach(input => { input.disabled = type !== 'choice'; });
     }
     function addChoice(card, value = '') {
       const row = document.createElement('p');
@@ -57,6 +82,7 @@
     }
     function addQuestion() {
       const card = template.content.firstElementChild.cloneNode(true);
+      card.querySelector('.question-type').onchange = () => updateType(card);
       card.querySelector('.add-choice').onclick = () => { addChoice(card); refresh(); };
       card.querySelector('.remove-question').onclick = () => { card.remove(); refresh(); };
       addChoice(card); addChoice(card); questions.append(card); refresh();
