@@ -51,7 +51,6 @@
             <a href="{% url 'profile_settings' %}">Особистий кабінет</a>
             <a href="{% url 'schedule' %}">Розклад</a>
             {% if user_role == "teacher" or user.is_staff %}<a href="{% url 'platform_admin_attendance' %}">Журнал</a>{% else %}<a href="{% url 'my_attendance' %}">Відвідуваність</a>{% endif %}
-            {% if user_role == "teacher" or user.is_staff %}<a href="{% url 'platform_admin_dashboard' %}"></a>{% endif %}
             {% if user.is_staff %}<a href="{% url 'admin:index' %}">Керування платформою</a>{% endif %}
             <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Вийти</button></form>
           </nav>
