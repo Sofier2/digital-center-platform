@@ -1,0 +1,19 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Додати наявний урок{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact admin-hero">
+    <span class="eyebrow">Курси</span>
+    <h1>Додати вже створений урок</h1>
+    <p>Платформа створить повну копію уроку в іншому курсі. Надалі її можна редагувати незалежно.</p>
+  </section>
+  <section class="admin-panel">
+    <form method="post" class="review-form">
+      {% csrf_token %}
+      <p><label>Наявний урок<select name="lesson_id" required><option value="">Оберіть урок</option>{% for lesson in lessons %}<option value="{{ lesson.id }}">{{ lesson.module.course.title }} · {{ lesson.module.title }} · {{ lesson.title }}</option>{% endfor %}</select></label></p>
+      <p><label>Додати до модуля<select name="module_id" required><option value="">Оберіть модуль іншого курсу</option>{% for module in modules %}<option value="{{ module.id }}">{{ module.course.title }} · {{ module.title }}</option>{% endfor %}</select></label></p>
+      <button class="primary-btn" type="submit">Додати урок до курсу</button>
+    </form>
+  </section>
+{% endblock %}

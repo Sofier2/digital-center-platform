@@ -17,6 +17,10 @@ from .models import (
     Enrollment,
     Lesson,
     LessonProgress,
+    LessonStep,
+    Material,
+    MaterialAttachment,
+    Module,
     ParentChild,
     Profile,
     Quiz,
@@ -30,6 +34,7 @@ from .models import (
     ScheduleEntry,
     ScheduleException,
     VocabularyWord,
+    VocabularySet,
 )
 
 
@@ -454,6 +459,52 @@ def platform_admin_courses(request):
 
 @login_required
 @user_passes_test(is_platform_manager)
+def reuse_lesson(request):
+    """Copy a complete lesson to a module in another course.
+
+    A copy is intentional: teachers can tailor either course afterwards without
+    changing the lesson seen by students in the other course.
+    """
+    lessons = Lesson.objects.select_related("module", "module__course").order_by("module__course__title", "module__order", "order")
+    modules = Module.objects.select_related("course").order_by("course__title", "order")
+    if request.method == "POST":
+        source = get_object_or_404(Lesson, pk=request.POST.get("lesson_id"))
+        destination = get_object_or_404(Module, pk=request.POST.get("module_id"))
+        if source.module_id == destination.id:
+            messages.error(request, "Оберіть інший модуль для копіювання уроку.")
+        else:
+            with transaction.atomic():
+                lesson = Lesson.objects.create(
+                    module=destination, title=source.title, summary=source.summary,
+                    content=source.content, video_url=source.video_url,
+                    order=(destination.lessons.order_by("-order").values_list("order", flat=True).first() or 0) + 1,
+                    is_available=source.is_available,
+                )
+                for step in source.steps.all():
+                    LessonStep.objects.create(lesson=lesson, kind=step.kind, order=step.order)
+                for material in source.materials.all():
+                    copied_material = Material.objects.create(lesson=lesson, title=material.title, file=material.file, external_url=material.external_url, description=material.description, is_code=material.is_code)
+                    for attachment in material.attachments.all():
+                        MaterialAttachment.objects.create(material=copied_material, title=attachment.title, file=attachment.file, external_url=attachment.external_url, note=attachment.note, order=attachment.order)
+                for vocabulary in source.vocabulary_sets.all():
+                    copied_vocabulary = VocabularySet.objects.create(lesson=lesson, title=vocabulary.title, description=vocabulary.description, order=vocabulary.order, is_published=vocabulary.is_published)
+                    for word in vocabulary.words.all():
+                        VocabularyWord.objects.create(vocabulary_set=copied_vocabulary, word=word.word, translation=word.translation, example=word.example, order=word.order)
+                for assignment in source.assignments.all():
+                    Assignment.objects.create(lesson=lesson, title=assignment.title, task=assignment.task, due_date=assignment.due_date, max_points=assignment.max_points)
+                for quiz in source.quizzes.all():
+                    copied_quiz = Quiz.objects.create(lesson=lesson, title=quiz.title, description=quiz.description, reading_title=quiz.reading_title, reading_text=quiz.reading_text, max_points=quiz.max_points, passing_percent=quiz.passing_percent, is_published=quiz.is_published, allow_retakes=quiz.allow_retakes, order=quiz.order)
+                    for question in quiz.questions.all():
+                        copied_question = QuizQuestion.objects.create(quiz=copied_quiz, question_type=question.question_type, context_text=question.context_text, audio_file=question.audio_file, audio_url=question.audio_url, image_file=question.image_file, image_url=question.image_url, text=question.text, correct_answer=question.correct_answer, drag_options=question.drag_options, explanation=question.explanation, order=question.order, is_active=question.is_active)
+                        for choice in question.choices.all():
+                            QuizChoice.objects.create(question=copied_question, text=choice.text, is_correct=choice.is_correct, order=choice.order)
+            messages.success(request, f"Урок «{source.title}» додано до курсу «{destination.course.title}» як окрему копію.")
+            return redirect("platform_admin_courses")
+    return render(request, "learning/platform_admin/reuse_lesson.html", {"lessons": lessons, "modules": modules})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
 def platform_admin_students(request):
     if request.method == "POST":
         student = get_object_or_404(User, pk=request.POST.get("student_id"))
@@ -515,6 +566,8 @@ def create_quiz(request):
                     lesson=lesson,
                     title=title,
                     description=request.POST.get("description", "").strip(),
+                    reading_title=request.POST.get("reading_title", "").strip(),
+                    reading_text=request.POST.get("reading_text", "").strip(),
                     max_points=request.POST.get("max_points") or 100,
                     passing_percent=request.POST.get("passing_percent") or 60,
                     is_published=request.POST.get("is_published") == "on",
@@ -538,6 +591,7 @@ def create_quiz(request):
                         context_text=request.POST.get(f"context_{index}", "").strip(),
                         audio_url=request.POST.get(f"audio_url_{index}", "").strip(),
                         image_url=request.POST.get(f"image_url_{index}", "").strip(),
+                        explanation=request.POST.get(f"explanation_{index}", "").strip(),
                         drag_options=drag_options,
                         order=created + 1,
                     )
@@ -552,6 +606,81 @@ def create_quiz(request):
                     messages.success(request, f"Тест «{quiz.title}» створено: {created} питань.")
                     return redirect("platform_admin_quizzes")
     return render(request, "learning/platform_admin/create_quiz.html", {"lessons": lessons})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def edit_quiz(request, pk):
+    quiz = get_object_or_404(Quiz.objects.prefetch_related("questions__choices"), pk=pk)
+    lessons = Lesson.objects.select_related("module", "module__course").order_by("module__course__title", "module__order", "order")
+    if request.method == "POST":
+        lesson = get_object_or_404(Lesson, pk=request.POST.get("lesson_id"))
+        title = request.POST.get("title", "").strip()
+        question_texts = request.POST.getlist("question_text")
+        if not title or not any(text.strip() for text in question_texts):
+            messages.error(request, "Вкажіть назву тесту та хоча б одне питання.")
+        else:
+            with transaction.atomic():
+                quiz.lesson = lesson
+                quiz.title = title
+                quiz.description = request.POST.get("description", "").strip()
+                quiz.reading_title = request.POST.get("reading_title", "").strip()
+                quiz.reading_text = request.POST.get("reading_text", "").strip()
+                quiz.max_points = request.POST.get("max_points") or 100
+                quiz.passing_percent = request.POST.get("passing_percent") or 60
+                quiz.is_published = request.POST.get("is_published") == "on"
+                quiz.allow_retakes = request.POST.get("allow_retakes") == "on"
+                quiz.save()
+                # Existing question records are updated where possible, preserving attempt history.
+                existing = {str(question.id): question for question in quiz.questions.all()}
+                used_ids = set()
+                created = 0
+                types = request.POST.getlist("question_type")
+                answers = request.POST.getlist("correct_answer")
+                drag_options = request.POST.getlist("drag_options")
+                for index, text in enumerate(question_texts):
+                    text = text.strip()
+                    question_type = types[index] if index < len(types) else QuizQuestion.Type.CHOICE
+                    choices = [item.strip() for item in request.POST.getlist(f"choices_{index}") if item.strip()]
+                    correct = request.POST.get(f"correct_{index}", "0")
+                    correct_answer = answers[index].strip() if index < len(answers) else ""
+                    drag = drag_options[index].strip() if index < len(drag_options) else ""
+                    if not text or (question_type == QuizQuestion.Type.CHOICE and len(choices) < 2) or (question_type in {QuizQuestion.Type.TEXT, QuizQuestion.Type.DRAG} and not correct_answer) or (question_type == QuizQuestion.Type.DRAG and len([item for item in drag.splitlines() if item.strip()]) < 2):
+                        continue
+                    question_id = request.POST.getlist("question_id")[index] if index < len(request.POST.getlist("question_id")) else ""
+                    question = existing.get(question_id)
+                    if question:
+                        used_ids.add(question_id)
+                    else:
+                        question = QuizQuestion(quiz=quiz)
+                    question.question_type = question_type
+                    question.text = text
+                    question.correct_answer = correct_answer
+                    question.drag_options = drag
+                    question.context_text = request.POST.get(f"context_{index}", "").strip()
+                    question.audio_url = request.POST.get(f"audio_url_{index}", "").strip()
+                    question.image_url = request.POST.get(f"image_url_{index}", "").strip()
+                    question.explanation = request.POST.get(f"explanation_{index}", "").strip()
+                    question.order = created + 1
+                    question.save()
+                    if question_type == QuizQuestion.Type.CHOICE:
+                        question.choices.all().delete()
+                        for choice_index, choice in enumerate(choices):
+                            QuizChoice.objects.create(question=question, text=choice, order=choice_index + 1, is_correct=str(choice_index) == correct)
+                    else:
+                        question.choices.all().delete()
+                    created += 1
+                # Questions with answers are retained to keep completed attempts intact.
+                quiz.questions.exclude(id__in=[int(item) for item in used_ids]).filter(answers__isnull=True).delete()
+            messages.success(request, f"Тест «{quiz.title}» оновлено.")
+            return redirect("platform_admin_quizzes")
+    quiz_data = {
+        "id": quiz.id, "lesson": quiz.lesson_id, "title": quiz.title, "description": quiz.description,
+        "reading_title": quiz.reading_title, "reading_text": quiz.reading_text, "max_points": quiz.max_points,
+        "passing_percent": quiz.passing_percent, "is_published": quiz.is_published, "allow_retakes": quiz.allow_retakes,
+        "questions": [{"id": question.id, "type": question.question_type, "text": question.text, "context": question.context_text, "audio_url": question.audio_url, "image_url": question.image_url, "explanation": question.explanation, "correct_answer": question.correct_answer, "drag_options": question.drag_options, "choices": [{"text": choice.text, "is_correct": choice.is_correct} for choice in question.choices.all()]} for question in quiz.questions.all()],
+    }
+    return render(request, "learning/platform_admin/create_quiz.html", {"lessons": lessons, "quiz": quiz, "quiz_data": quiz_data})
 
 
 @login_required

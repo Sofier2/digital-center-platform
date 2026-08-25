@@ -1,24 +1,26 @@
 {% extends "learning/base.html" %}
 
-{% block title %}Новий тест{% endblock %}
+{% block title %}{% if quiz %}Редагування тесту{% else %}Новий тест{% endif %}{% endblock %}
 
 {% block content %}
   <section class="page-hero compact admin-hero">
     <span class="eyebrow">Тестування</span>
-    <h1>Створити тест</h1>
-    <p>Додайте питання з вибором відповіді або заповненням пропуску. Для listening вставте пряме посилання на аудіо.</p>
+    <h1>{% if quiz %}Редагувати тест{% else %}Створити тест{% endif %}</h1>
+    <p>Додавайте й змінюйте питання прямо на платформі. Для listening вставте пряме посилання на аудіо.</p>
   </section>
 
   <section class="admin-panel">
     <form method="post" class="review-form" id="quiz-builder">
       {% csrf_token %}
-      <p><label>Урок<select name="lesson_id" required><option value="">Оберіть урок</option>{% for lesson in lessons %}<option value="{{ lesson.id }}">{{ lesson.module.course.title }} · {{ lesson.title }}</option>{% endfor %}</select></label></p>
-      <p><label>Назва тесту<input name="title" required placeholder="Наприклад: Повторення Unit 3"></label></p>
-      <p><label>Короткий опис (необов'язково)<textarea name="description" rows="3"></textarea></label></p>
-      <p><label>Максимум балів<input name="max_points" type="number" min="1" value="100"></label></p>
-      <p><label>Прохідний відсоток<input name="passing_percent" type="number" min="0" max="100" value="60"></label></p>
-      <p><label><input type="checkbox" name="is_published" checked> Одразу показати учням</label></p>
-      <p><label><input type="checkbox" name="allow_retakes" checked> Дозволити повторне проходження</label></p>
+      <p><label>Урок<select name="lesson_id" required><option value="">Оберіть урок</option>{% for lesson in lessons %}<option value="{{ lesson.id }}" {% if quiz.lesson_id == lesson.id %}selected{% endif %}>{{ lesson.module.course.title }} · {{ lesson.title }}</option>{% endfor %}</select></label></p>
+      <p><label>Назва тесту<input name="title" required value="{{ quiz.title|default:'' }}" placeholder="Наприклад: Повторення Unit 3"></label></p>
+      <p><label>Короткий опис (необов'язково)<textarea name="description" rows="3">{{ quiz.description|default:'' }}</textarea></label></p>
+      <p><label>Заголовок тексту для reading (необов'язково)<input name="reading_title" value="{{ quiz.reading_title|default:'' }}"></label></p>
+      <p><label>Спільний текст для reading (необов'язково)<textarea name="reading_text" rows="5">{{ quiz.reading_text|default:'' }}</textarea></label></p>
+      <p><label>Максимум балів<input name="max_points" type="number" min="1" value="{{ quiz.max_points|default:100 }}"></label></p>
+      <p><label>Прохідний відсоток<input name="passing_percent" type="number" min="0" max="100" value="{{ quiz.passing_percent|default:60 }}"></label></p>
+      <p><label><input type="checkbox" name="is_published" {% if not quiz or quiz.is_published %}checked{% endif %}> Одразу показати учням</label></p>
+      <p><label><input type="checkbox" name="allow_retakes" {% if not quiz or quiz.allow_retakes %}checked{% endif %}> Дозволити повторне проходження</label></p>
 
       <div id="questions"></div>
       <button type="button" class="secondary-btn" id="add-question">+ Додати питання</button>
@@ -31,26 +33,36 @@
       <div class="student-head"><strong>Питання <span class="question-number"></span></strong><button type="button" class="secondary-btn remove-question">Прибрати</button></div>
       <p><label>Тип завдання<select class="question-type"><option value="choice">Обрати правильну відповідь</option><option value="text">Вписати відповідь / заповнити пропуск</option><option value="drag">Перетягнути відповідь у пропуск</option></select></label></p>
       <p><label>Текст питання<textarea class="question-text" rows="2" required></textarea></label></p>
+      <input type="hidden" class="question-id">
       <p><label>Уривок або підказка (необов'язково)<textarea class="context-text" rows="2"></textarea></label></p>
       <p><label>Посилання на аудіо для listening (необов'язково)<input class="audio-url" type="url" placeholder="https://...mp3"></label></p>
       <p><label>Посилання на зображення (необов'язково)<input class="image-url" type="url" placeholder="https://...jpg або .png"></label></p>
+      <p><label>Пояснення після відповіді (необов'язково)<textarea class="explanation" rows="2"></textarea></label></p>
       <p class="text-answer"><label>Правильна текстова відповідь<input class="correct-text" type="text" placeholder="Наприклад: went"></label></p>
       <p class="drag-options-field"><label>Слова для перетягування — кожне з нового рядка<textarea class="drag-options-text" rows="3" placeholder="went&#10;go&#10;going"></textarea></label></p>
       <div class="choice-list"></div>
       <button type="button" class="secondary-btn add-choice">+ Варіант відповіді</button>
     </article>
   </template>
+  {% if quiz_data %}{{ quiz_data|json_script:"quiz-data" }}{% endif %}
   <script>
     const questions = document.querySelector('#questions');
     const template = document.querySelector('#question-template');
+    {% if quiz_data %}
+      const existingQuiz = JSON.parse(document.getElementById('quiz-data').textContent);
+    {% else %}
+      const existingQuiz = null;
+    {% endif %}
     function refresh() {
       [...questions.children].forEach((card, index) => {
         card.querySelector('.question-number').textContent = index + 1;
         card.querySelector('.question-text').name = 'question_text';
+        card.querySelector('.question-id').name = 'question_id';
         card.querySelector('.question-type').name = 'question_type';
         card.querySelector('.context-text').name = `context_${index}`;
         card.querySelector('.audio-url').name = `audio_url_${index}`;
         card.querySelector('.image-url').name = `image_url_${index}`;
+        card.querySelector('.explanation').name = `explanation_${index}`;
         card.querySelector('.correct-text').name = 'correct_answer';
         card.querySelector('.drag-options-text').name = 'drag_options';
         const list = card.querySelector('.choice-list');
@@ -74,20 +86,43 @@
       card.querySelector('.add-choice').hidden = type !== 'choice';
       card.querySelectorAll('.choice-list input').forEach(input => { input.disabled = type !== 'choice'; });
     }
-    function addChoice(card, value = '') {
+    function addChoice(card, value = '', isCorrect = false) {
       const row = document.createElement('p');
-      row.innerHTML = `<label><input type="radio" required> Правильна</label> <input type="text" required placeholder="Варіант відповіді" value="${value}"> <button type="button" class="secondary-btn remove-choice">×</button>`;
+      const label = document.createElement('label');
+      const radio = document.createElement('input');
+      radio.type = 'radio'; radio.required = true;
+      label.append(radio, ' Правильна');
+      const input = document.createElement('input');
+      input.type = 'text'; input.required = true; input.placeholder = 'Варіант відповіді'; input.value = value;
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.className = 'secondary-btn remove-choice'; remove.textContent = '×';
+      row.append(label, ' ', input, ' ', remove);
       row.querySelector('.remove-choice').onclick = () => { row.remove(); refresh(); };
+      row.querySelector('input[type=radio]').checked = isCorrect;
       card.querySelector('.choice-list').append(row);
     }
-    function addQuestion() {
+    function addQuestion(data = null) {
       const card = template.content.firstElementChild.cloneNode(true);
       card.querySelector('.question-type').onchange = () => updateType(card);
       card.querySelector('.add-choice').onclick = () => { addChoice(card); refresh(); };
       card.querySelector('.remove-question').onclick = () => { card.remove(); refresh(); };
-      addChoice(card); addChoice(card); questions.append(card); refresh();
+      if (data) {
+        card.querySelector('.question-id').value = data.id || '';
+        card.querySelector('.question-type').value = data.type || 'choice';
+        card.querySelector('.question-text').value = data.text || '';
+        card.querySelector('.context-text').value = data.context || '';
+        card.querySelector('.audio-url').value = data.audio_url || '';
+        card.querySelector('.image-url').value = data.image_url || '';
+        card.querySelector('.explanation').value = data.explanation || '';
+        card.querySelector('.correct-text').value = data.correct_answer || '';
+        card.querySelector('.drag-options-text').value = data.drag_options || '';
+        (data.choices || []).forEach(choice => addChoice(card, choice.text, choice.is_correct));
+      }
+      if (!card.querySelector('.choice-list').children.length) { addChoice(card); addChoice(card); }
+      questions.append(card); refresh();
     }
     document.querySelector('#add-question').onclick = addQuestion;
-    addQuestion();
+    if (existingQuiz && existingQuiz.questions.length) existingQuiz.questions.forEach(addQuestion);
+    else addQuestion();
   </script>
 {% endblock %}

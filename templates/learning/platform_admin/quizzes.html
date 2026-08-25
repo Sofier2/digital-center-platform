@@ -21,6 +21,7 @@
           <small>{{ quiz.lesson.module.course.title }} · {{ quiz.lesson.title }}</small>
           <b>{{ quiz.questions_total }} питань</b>
           <em>{% if quiz.is_published %}Опубліковано{% else %}Чернетка{% endif %}</em>
+          <a class="secondary-btn" href="{% url 'edit_quiz' quiz.id %}">Редагувати</a>
         </div>
       {% empty %}<p class="muted">Тестів ще немає. Створіть перший за кілька хвилин.</p>{% endfor %}
     </div>
