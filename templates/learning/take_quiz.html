@@ -12,13 +12,11 @@
         {% if quiz.description %}<p class="lead">{{ quiz.description }}</p>{% endif %}
         <ul class="quiz-meta">
           <li>{{ questions_count }} питань</li>
-          <li>{{ quiz.max_points }} балів</li>
-          <li>Прохідний результат: {{ quiz.passing_percent }}%</li>
+          {% if quiz.is_graded %}<li>{{ quiz.max_points }} балів</li><li>Прохідний результат: {{ quiz.passing_percent }}%</li>{% else %}<li>Без оцінювання</li>{% endif %}
         </ul>
         {% if latest_attempt %}
           <div class="checked-box">
-            <strong>Останній результат: {{ latest_attempt.score_percent }}%</strong>
-            <p>{{ latest_attempt.points }}/{{ quiz.max_points }} балів</p>
+            {% if quiz.is_graded %}<strong>Останній результат: {{ latest_attempt.score_percent }}%</strong><p>{{ latest_attempt.points }}/{{ quiz.max_points }} балів</p>{% else %}<strong>Тест уже пройдено</strong><p>Без оцінювання</p>{% endif %}
           </div>
         {% endif %}
       </article>

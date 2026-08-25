@@ -385,6 +385,7 @@ class Quiz(models.Model):
     reading_text = models.TextField("спільний текст для reading", blank=True)
     max_points = models.PositiveIntegerField("максимум балів", default=100)
     passing_percent = models.PositiveIntegerField("прохідний відсоток", default=60)
+    is_graded = models.BooleanField("показувати оцінку", default=True)
     is_published = models.BooleanField("опубліковано", default=True)
     allow_retakes = models.BooleanField("дозволити повторне проходження", default=True)
     order = models.PositiveIntegerField("порядок", default=1)

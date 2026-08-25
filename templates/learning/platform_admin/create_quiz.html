@@ -19,6 +19,7 @@
       <p><label>Спільний текст для reading (необов'язково)<textarea name="reading_text" rows="5">{{ quiz.reading_text|default:'' }}</textarea></label></p>
       <p><label>Максимум балів<input name="max_points" type="number" min="1" value="{{ quiz.max_points|default:100 }}"></label></p>
       <p><label>Прохідний відсоток<input name="passing_percent" type="number" min="0" max="100" value="{{ quiz.passing_percent|default:60 }}"></label></p>
+      <p><label><input type="checkbox" name="is_graded" {% if not quiz or quiz.is_graded %}checked{% endif %}> Показувати учням бали та відсоток</label></p>
       <p><label><input type="checkbox" name="is_published" {% if not quiz or quiz.is_published %}checked{% endif %}> Одразу показати учням</label></p>
       <p><label><input type="checkbox" name="allow_retakes" {% if not quiz or quiz.allow_retakes %}checked{% endif %}> Дозволити повторне проходження</label></p>
 

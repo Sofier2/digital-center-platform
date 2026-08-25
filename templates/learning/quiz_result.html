@@ -8,12 +8,18 @@
       <a class="back-link" href="{{ quiz.lesson.get_absolute_url }}">Назад до уроку</a>
       <span class="eyebrow light">{{ quiz.lesson.module.course.title }}</span>
       <h1>{{ quiz.title }}</h1>
-      <div class="result-score {% if attempt.is_passed %}passed{% else %}failed{% endif %}">
-        <strong>{{ attempt.score_percent }}%</strong>
-        <span>{{ attempt.correct_count }}/{{ attempt.total_count }} правильних відповідей</span>
-        <b>{{ attempt.points }}/{{ quiz.max_points }} балів</b>
-      </div>
-      {% if attempt.is_passed %}
+      {% if quiz.is_graded %}
+        <div class="result-score {% if attempt.is_passed %}passed{% else %}failed{% endif %}">
+          <strong>{{ attempt.score_percent }}%</strong>
+          <span>{{ attempt.correct_count }}/{{ attempt.total_count }} правильних відповідей</span>
+          <b>{{ attempt.points }}/{{ quiz.max_points }} балів</b>
+        </div>
+      {% else %}
+        <div class="result-score passed"><strong>✓</strong><span>Тест завершено</span><b>Без оцінювання</b></div>
+      {% endif %}
+      {% if not quiz.is_graded %}
+        <p class="lead">Тест завершено. Бали та відсотки для нього не виставляються.</p>
+      {% elif attempt.is_passed %}
         <p class="lead">Тест складено. Результат збережено в кабінеті.</p>
       {% else %}
         <p class="lead">Результат нижчий за прохідний рівень {{ quiz.passing_percent }}%.</p>

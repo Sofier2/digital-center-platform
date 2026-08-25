@@ -29,7 +29,7 @@
         {% if quizzes_total %}
           <div class="lesson-quiz-results">
             {% for item in row.attempts %}
-              <div><span>{{ item.quiz.title }}</span>{% if item.attempt %}<b class="{% if item.attempt.is_passed %}is-passed{% else %}is-not-passed{% endif %}">{{ item.attempt.score_percent }}% · {{ item.attempt.points }}/{{ item.quiz.max_points }}</b>{% else %}<em>Не проходив/ла</em>{% endif %}</div>
+              <div><span>{{ item.quiz.title }}</span>{% if item.attempt %}{% if item.quiz.is_graded %}<b class="{% if item.attempt.is_passed %}is-passed{% else %}is-not-passed{% endif %}">{{ item.attempt.score_percent }}% · {{ item.attempt.points }}/{{ item.quiz.max_points }}</b>{% else %}<b class="is-passed">✓ Пройдено</b>{% endif %}{% else %}<em>Не проходив/ла</em>{% endif %}</div>
             {% endfor %}
           </div>
         {% endif %}

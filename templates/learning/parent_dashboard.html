@@ -93,8 +93,7 @@
               <div class="result-card">
                 <strong>{{ attempt.quiz.title }}</strong>
                 <span>{{ attempt.quiz.lesson.module.course.title }} · {{ attempt.quiz.lesson.title }}</span>
-                <b>{{ attempt.score_percent }}%</b>
-                <p>{{ attempt.points }}/{{ attempt.quiz.max_points }} балів</p>
+                {% if attempt.quiz.is_graded %}<b>{{ attempt.score_percent }}%</b><p>{{ attempt.points }}/{{ attempt.quiz.max_points }} балів</p>{% else %}<b>✓ Пройдено</b><p>Без оцінювання</p>{% endif %}
               </div>
             {% empty %}
               <p class="muted">Пройдених тестів ще немає.</p>

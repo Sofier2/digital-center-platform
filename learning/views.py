@@ -501,7 +501,7 @@ def reuse_lesson(request):
                 for assignment in source.assignments.all():
                     Assignment.objects.create(lesson=lesson, title=assignment.title, task=assignment.task, due_date=assignment.due_date, max_points=assignment.max_points)
                 for quiz in source.quizzes.all():
-                    copied_quiz = Quiz.objects.create(lesson=lesson, title=quiz.title, description=quiz.description, reading_title=quiz.reading_title, reading_text=quiz.reading_text, max_points=quiz.max_points, passing_percent=quiz.passing_percent, is_published=quiz.is_published, allow_retakes=quiz.allow_retakes, order=quiz.order)
+                    copied_quiz = Quiz.objects.create(lesson=lesson, title=quiz.title, description=quiz.description, reading_title=quiz.reading_title, reading_text=quiz.reading_text, max_points=quiz.max_points, passing_percent=quiz.passing_percent, is_graded=quiz.is_graded, is_published=quiz.is_published, allow_retakes=quiz.allow_retakes, order=quiz.order)
                     for question in quiz.questions.all():
                         copied_question = QuizQuestion.objects.create(quiz=copied_quiz, question_type=question.question_type, context_text=question.context_text, audio_file=question.audio_file, audio_url=question.audio_url, image_file=question.image_file, image_url=question.image_url, text=question.text, correct_answer=question.correct_answer, drag_options=question.drag_options, explanation=question.explanation, order=question.order, is_active=question.is_active)
                         for choice in question.choices.all():
@@ -621,7 +621,7 @@ def lesson_results(request, pk):
             "submitted_total": len(submitted),
             "checked_total": sum(1 for item in submitted if item.is_reviewed),
             "attempts": [{"quiz": quiz, "attempt": latest_attempts.get((student.id, quiz.id))} for quiz in quizzes],
-            "passed_quizzes": sum(1 for item in attempts if item and item.is_passed),
+            "passed_quizzes": sum(1 for item in attempts if item and (not item.quiz.is_graded or item.is_passed)),
         })
     return render(request, "learning/platform_admin/lesson_results.html", {
         "lesson": lesson, "rows": rows, "assignments_total": len(assignments), "quizzes_total": len(quizzes),
@@ -656,6 +656,7 @@ def create_quiz(request):
                     reading_text=request.POST.get("reading_text", "").strip(),
                     max_points=request.POST.get("max_points") or 100,
                     passing_percent=request.POST.get("passing_percent") or 60,
+                    is_graded=request.POST.get("is_graded") == "on",
                     is_published=request.POST.get("is_published") == "on",
                     allow_retakes=request.POST.get("allow_retakes") == "on",
                 )
@@ -714,6 +715,7 @@ def edit_quiz(request, pk):
                 quiz.reading_text = request.POST.get("reading_text", "").strip()
                 quiz.max_points = request.POST.get("max_points") or 100
                 quiz.passing_percent = request.POST.get("passing_percent") or 60
+                quiz.is_graded = request.POST.get("is_graded") == "on"
                 quiz.is_published = request.POST.get("is_published") == "on"
                 quiz.allow_retakes = request.POST.get("allow_retakes") == "on"
                 quiz.save()
@@ -763,7 +765,7 @@ def edit_quiz(request, pk):
     quiz_data = {
         "id": quiz.id, "lesson": quiz.lesson_id, "title": quiz.title, "description": quiz.description,
         "reading_title": quiz.reading_title, "reading_text": quiz.reading_text, "max_points": quiz.max_points,
-        "passing_percent": quiz.passing_percent, "is_published": quiz.is_published, "allow_retakes": quiz.allow_retakes,
+        "passing_percent": quiz.passing_percent, "is_graded": quiz.is_graded, "is_published": quiz.is_published, "allow_retakes": quiz.allow_retakes,
         "questions": [{"id": question.id, "type": question.question_type, "text": question.text, "context": question.context_text, "audio_url": question.audio_url, "image_url": question.image_url, "explanation": question.explanation, "correct_answer": question.correct_answer, "drag_options": question.drag_options, "choices": [{"text": choice.text, "is_correct": choice.is_correct} for choice in question.choices.all()]} for question in quiz.questions.all()],
     }
     return render(request, "learning/platform_admin/create_quiz.html", {"lessons": lessons, "quiz": quiz, "quiz_data": quiz_data})

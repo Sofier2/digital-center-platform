@@ -324,13 +324,13 @@ class QuizQuestionInline(admin.StackedInline):
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ("title", "lesson", "max_points", "passing_percent", "is_published", "allow_retakes")
+    list_display = ("title", "lesson", "is_graded", "max_points", "passing_percent", "is_published", "allow_retakes")
     list_filter = ("is_published", "lesson__module__course")
     search_fields = ("title", "description", "reading_title", "reading_text", "lesson__title")
     fieldsets = (
         ("Основне", {"fields": ("lesson", "title", "description")}),
         ("Reading", {"fields": ("reading_title", "reading_text"), "description": "Додай один великий текст, який учень читатиме під час усього тесту."}),
-        ("Оцінювання", {"fields": ("max_points", "passing_percent", "allow_retakes")}),
+        ("Оцінювання", {"fields": ("is_graded", "max_points", "passing_percent", "allow_retakes")}),
         ("Публікація", {"fields": ("is_published", "order")}),
     )
     inlines = [QuizQuestionInline]

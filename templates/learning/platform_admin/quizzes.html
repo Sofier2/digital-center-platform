@@ -34,8 +34,7 @@
           <span>{{ attempt.student.get_full_name|default:attempt.student.username }}</span>
           <strong>{{ attempt.quiz.title }}</strong>
           <small>{{ attempt.quiz.lesson.module.course.title }} · {{ attempt.quiz.lesson.title }}</small>
-          <b>{{ attempt.score_percent }}%</b>
-          <em>{{ attempt.points }}/{{ attempt.quiz.max_points }}</em>
+          {% if attempt.quiz.is_graded %}<b>{{ attempt.score_percent }}%</b><em>{{ attempt.points }}/{{ attempt.quiz.max_points }}</em>{% else %}<em>Пройдено без оцінки</em>{% endif %}
         </a>
       {% empty %}
         <p class="muted">Результатів тестів ще немає.</p>
