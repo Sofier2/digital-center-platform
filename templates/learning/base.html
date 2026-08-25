@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap&subset=cyrillic" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260722-schedule">
+    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260825-teacher-panel">
   </head>
   <body>
     <header class="app-header">
@@ -45,7 +45,7 @@
       </nav>
       {% if user.is_authenticated %}
         <details class="mobile-menu">
-          <summary aria-label="Відкрити меню"><span></span><span></span><span></span><b>Меню</b></summary>
+          <summary aria-label="Відкрити меню"><span class="menu-glyph" aria-hidden="true">☰</span><b>Меню</b></summary>
           <nav aria-label="Мобільна навігація">
             <a href="{% url 'dashboard' %}">Платформа</a>
             <a href="{% url 'profile_settings' %}">Особистий кабінет</a>
