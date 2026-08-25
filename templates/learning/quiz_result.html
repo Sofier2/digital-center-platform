@@ -38,6 +38,11 @@
           {% endif %}
           <strong>{{ forloop.counter }}. {{ answer.question.text }}</strong>
           <p>Твоя відповідь: {% if answer.question.question_type == 'text' or answer.question.question_type == 'drag' %}{{ answer.text_answer|default:"Не введено" }}{% else %}{{ answer.selected_choice.text|default:"Не обрано" }}{% endif %}</p>
+          {% if answer.is_correct %}
+            <span class="answer-feedback is-correct">✓ Правильно!</span>
+          {% else %}
+            <span class="answer-feedback is-wrong">↻ Спробуй ще</span>
+          {% endif %}
           {% if answer.question.explanation %}<small>{{ answer.question.explanation }}</small>{% endif %}
         </article>
       {% empty %}

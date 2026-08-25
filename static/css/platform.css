@@ -257,6 +257,32 @@ h2 {
 .lesson-quiz-results .is-not-passed { color: #9e421e; background: #fff0e9; }
 .lesson-quiz-results em { color: var(--text-soft, var(--muted)); background: var(--soft); }
 
+/* Friendly, playful feedback without hiding the learning outcome. */
+.answer-feedback {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  animation: feedback-pop 320ms ease-out both;
+}
+.answer-feedback.is-correct { color: #137146; background: #dff9e9; border: 1px solid #a9e8c1; }
+.answer-feedback.is-wrong { color: #a14726; background: #fff0e9; border: 1px solid #ffcdbb; }
+.quiz-question { transition: transform 180ms ease, box-shadow 180ms ease; }
+.quiz-question:hover { transform: translateY(-3px) rotate(-0.15deg); box-shadow: 0 15px 28px rgba(79, 49, 175, .12); }
+.primary-btn, .secondary-btn, .teacher-course-list a, .teacher-task-list a { transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease; }
+.primary-btn:hover, .secondary-btn:hover { transform: translateY(-2px) rotate(-0.3deg); filter: saturate(1.14); }
+.item-kind, .eyebrow { position: relative; }
+.item-kind::after { content: "✦"; margin-left: 5px; color: #ffba38; }
+@keyframes feedback-pop { from { opacity: 0; transform: scale(.7) rotate(-5deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .answer-feedback { animation: none; }
+  .quiz-question:hover, .primary-btn:hover, .secondary-btn:hover { transform: none; }
+}
+
 @media (max-width: 900px) {
   .teacher-workspace { grid-template-columns: 1fr; }
   .teacher-sidebar { position: static; grid-template-columns: repeat(3, minmax(0, 1fr)); }
