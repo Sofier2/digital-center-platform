@@ -1,0 +1,33 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Здачі завдання{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">{{ assignment.lesson.module.course.title }}</span>
+    <h1>{{ assignment.title }}</h1>
+    <p>{{ assignment.task }}</p>
+  </section>
+  <section class="assignment-review-list">
+    <div class="section-title"><div><span class="eyebrow light">Перевірка</span><h2>Здачі учнів</h2></div><a class="secondary-btn" href="{% url 'platform_admin_submissions' %}">Усі домашні роботи</a></div>
+    {% for row in student_rows %}
+      <article class="assignment-review-card {% if not row.submission %}is-missing{% endif %}">
+        <header><div><strong>{{ row.student.get_full_name|default:row.student.username }}</strong><small>{% if row.submission %}Здано {{ row.submission.submitted_at|date:"d.m.Y H:i" }}{% else %}Роботу ще не здано{% endif %}</small></div>{% if row.submission.is_reviewed %}<span class="reviewed-pill">✓ Перевірено</span>{% elif row.submission %}<span class="pending-pill">Потрібна перевірка</span>{% endif %}</header>
+        {% if row.submission %}
+          <div class="assignment-answer">
+            {% if row.submission.answer %}<div>{{ row.submission.answer|linebreaks }}</div>{% endif %}
+            {% if row.submission.file %}<a class="file-link" href="{{ row.submission.file.url }}" target="_blank" rel="noreferrer">Відкрити файл роботи</a>{% endif %}
+            {% for attachment in row.submission.attachments.all %}{% if attachment.file %}<a class="file-link" href="{{ attachment.file.url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Вкладення" }}</a>{% elif attachment.external_url %}<a class="file-link" href="{{ attachment.external_url }}" target="_blank" rel="noreferrer">{{ attachment.title|default:"Посилання" }}</a>{% endif %}{% endfor %}
+          </div>
+          <form method="post" class="quick-grade-form">
+            {% csrf_token %}<input type="hidden" name="submission_id" value="{{ row.submission.id }}">
+            <label class="review-check"><input type="checkbox" name="is_reviewed" {% if row.submission.is_reviewed %}checked{% endif %}> Перевірено</label>
+            <label>Оцінка <input type="number" name="points" min="0" max="{{ assignment.max_points }}" value="{{ row.submission.points|default_if_none:'' }}" placeholder="0–{{ assignment.max_points }}"></label>
+            <label class="grade-comment">Коментар <textarea name="teacher_comment" rows="2">{{ row.submission.teacher_comment }}</textarea></label>
+            <button class="primary-btn" type="submit">Зберегти</button>
+          </form>
+        {% endif %}
+      </article>
+    {% empty %}<p class="muted">У цьому курсі ще немає учнів.</p>{% endfor %}
+  </section>
+{% endblock %}

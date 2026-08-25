@@ -21,7 +21,7 @@
         <span>{{ submission.student.get_full_name|default:submission.student.username }}</span>
         <strong>{{ submission.assignment.lesson.module.course.title }} / {{ submission.assignment.title }}</strong>
         <small>{{ submission.submitted_at }}</small>
-        {% if submission.points != None %}<b>{{ submission.points }}/{{ submission.assignment.max_points }}</b>{% else %}<em>Перевірити</em>{% endif %}
+        {% if submission.is_reviewed %}<b>{% if submission.points != None %}{{ submission.points }}/{{ submission.assignment.max_points }}{% else %}Перевірено{% endif %}</b>{% else %}<em>Перевірити</em>{% endif %}
       </a>
     {% empty %}
       <p class="muted">Немає робіт у цьому списку.</p>

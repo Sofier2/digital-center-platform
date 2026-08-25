@@ -412,7 +412,7 @@ class SubmissionAttachmentInline(admin.TabularInline):
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ("assignment", "student", "submitted_at", "points")
+    list_display = ("assignment", "student", "submitted_at", "is_reviewed", "points")
     list_filter = ("assignment__lesson__module__course",)
     search_fields = ("student__username", "assignment__title", "answer", "teacher_comment")
     inlines = [SubmissionAttachmentInline]

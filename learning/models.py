@@ -536,6 +536,7 @@ class Submission(models.Model):
     submitted_at = models.DateTimeField("здано", auto_now_add=True)
     updated_at = models.DateTimeField("оновлено", auto_now=True)
     points = models.PositiveIntegerField("бали", blank=True, null=True)
+    is_reviewed = models.BooleanField("перевірено", default=False)
     teacher_comment = models.TextField("коментар викладача", blank=True)
 
     class Meta:

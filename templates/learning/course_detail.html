@@ -45,6 +45,7 @@
                   {% if progress|dict_get:lesson.id %}Пройдено{% else %}Відкрити урок{% endif %}
                 </span>
               </a>
+              {% if is_manager %}<a class="lesson-results-link" href="{% url 'lesson_results' lesson.id %}">Результати учнів →</a>{% endif %}
             {% else %}
               <div class="path-lesson is-locked">
                 <span class="path-marker">{{ lesson.order|stringformat:"02d" }}</span>

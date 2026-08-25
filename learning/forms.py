@@ -62,7 +62,7 @@ class ProfileForm(forms.ModelForm):
 class ReviewSubmissionForm(forms.ModelForm):
     class Meta:
         model = Submission
-        fields = ["points", "teacher_comment"]
+        fields = ["points", "is_reviewed", "teacher_comment"]
         widgets = {
             "points": forms.NumberInput(attrs={"min": 0, "placeholder": "Наприклад, 95"}),
             "teacher_comment": forms.Textarea(

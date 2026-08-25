@@ -1,0 +1,39 @@
+{% extends "learning/base.html" %}
+
+{% block title %}Результати уроку{% endblock %}
+
+{% block content %}
+  <section class="page-hero compact">
+    <span class="eyebrow">{{ lesson.module.course.title }} · {{ lesson.module.title }}</span>
+    <h1>{{ lesson.title }}</h1>
+    <p>Проходження уроку, домашні роботи та результати тестів кожного учня.</p>
+  </section>
+
+  <section class="lesson-results-summary">
+    <span>Домашніх завдань: <b>{{ assignments_total }}</b></span>
+    <span>Тестів: <b>{{ quizzes_total }}</b></span>
+    <a class="secondary-btn" href="{{ lesson.module.course.get_absolute_url }}">Назад до курсу</a>
+  </section>
+
+  <section class="lesson-results-list">
+    {% for row in rows %}
+      <article class="lesson-result-card">
+        <header>
+          <div><strong>{{ row.student.get_full_name|default:row.student.username }}</strong><small>{% if row.progress and row.progress.is_done %}Урок позначено пройденим{% else %}Урок ще не позначено пройденим{% endif %}</small></div>
+          {% if row.progress and row.progress.is_done %}<span class="reviewed-pill">✓ Урок пройдено</span>{% else %}<span class="pending-pill">У процесі</span>{% endif %}
+        </header>
+        <div class="lesson-result-metrics">
+          <div><small>Домашні роботи</small><strong>{{ row.submitted_total }}/{{ assignments_total }}</strong><span>перевірено: {{ row.checked_total }}</span></div>
+          <div><small>Тести складено</small><strong>{{ row.passed_quizzes }}/{{ quizzes_total }}</strong><span>останній результат нижче</span></div>
+        </div>
+        {% if quizzes_total %}
+          <div class="lesson-quiz-results">
+            {% for item in row.attempts %}
+              <div><span>{{ item.quiz.title }}</span>{% if item.attempt %}<b class="{% if item.attempt.is_passed %}is-passed{% else %}is-not-passed{% endif %}">{{ item.attempt.score_percent }}% · {{ item.attempt.points }}/{{ item.quiz.max_points }}</b>{% else %}<em>Не проходив/ла</em>{% endif %}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </article>
+    {% empty %}<p class="muted">У цьому курсі ще немає активних учнів.</p>{% endfor %}
+  </section>
+{% endblock %}

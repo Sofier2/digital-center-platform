@@ -200,7 +200,7 @@ def course_detail(request, pk):
         item.lesson_id: item.is_done
         for item in LessonProgress.objects.filter(student=request.user, lesson__module__course=course)
     }
-    return render(request, "learning/course_detail.html", {"course": course, "progress": progress})
+    return render(request, "learning/course_detail.html", {"course": course, "progress": progress, "is_manager": is_platform_manager(request.user)})
 
 
 @login_required
@@ -438,11 +438,19 @@ def platform_admin_dashboard(request):
     context = {
         "courses_count": Course.objects.count(),
         "students_count": User.objects.filter(enrollments__isnull=False).distinct().count(),
-        "pending_count": Submission.objects.filter(points__isnull=True).count(),
-        "checked_count": Submission.objects.filter(points__isnull=False).count(),
+        "pending_count": Submission.objects.filter(is_reviewed=False).count(),
+        "checked_count": Submission.objects.filter(is_reviewed=True).count(),
         "quiz_attempts_count": QuizAttempt.objects.count(),
         "submissions": submissions,
         "quiz_attempts": quiz_attempts,
+        "courses": Course.objects.annotate(
+            students_total=Count("enrollments", filter=Q(enrollments__is_active=True), distinct=True),
+            lessons_total=Count("modules__lessons", distinct=True),
+        ).order_by("title"),
+        "assignments": Assignment.objects.select_related("lesson", "lesson__module", "lesson__module__course").annotate(
+            submitted_total=Count("submissions", distinct=True),
+            checked_total=Count("submissions", filter=Q(submissions__is_reviewed=True), distinct=True),
+        ).order_by("lesson__module__course__title", "lesson__module__order", "lesson__order", "id"),
     }
     return render(request, "learning/platform_admin/dashboard.html", context)
 
@@ -534,12 +542,90 @@ def platform_admin_submissions(request):
     status = request.GET.get("status", "pending")
     submissions = Submission.objects.select_related("student", "assignment", "assignment__lesson", "assignment__lesson__module__course").prefetch_related("attachments")
     if status == "checked":
-        submissions = submissions.filter(points__isnull=False)
+        submissions = submissions.filter(is_reviewed=True)
     elif status == "all":
         submissions = submissions.all()
     else:
-        submissions = submissions.filter(points__isnull=True)
+        submissions = submissions.filter(is_reviewed=False)
     return render(request, "learning/platform_admin/submissions.html", {"submissions": submissions, "status": status})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def assignment_submissions(request, pk):
+    assignment = get_object_or_404(Assignment.objects.select_related("lesson", "lesson__module", "lesson__module__course"), pk=pk)
+    submissions = {
+        item.student_id: item
+        for item in Submission.objects.filter(assignment=assignment).select_related("student").prefetch_related("attachments")
+    }
+    students = User.objects.filter(
+        enrollments__course=assignment.lesson.module.course,
+        enrollments__is_active=True,
+    ).distinct().order_by("first_name", "last_name", "username")
+    if request.method == "POST":
+        submission = get_object_or_404(Submission, pk=request.POST.get("submission_id"), assignment=assignment)
+        raw_points = request.POST.get("points", "").strip()
+        if raw_points:
+            try:
+                points = int(raw_points)
+                if not 0 <= points <= assignment.max_points:
+                    raise ValueError
+                submission.points = points
+            except ValueError:
+                messages.error(request, f"Оцінка має бути від 0 до {assignment.max_points}.")
+                return redirect("assignment_submissions", pk=assignment.pk)
+        else:
+            submission.points = None
+        submission.is_reviewed = request.POST.get("is_reviewed") == "on"
+        submission.teacher_comment = request.POST.get("teacher_comment", "").strip()
+        submission.save(update_fields=["points", "is_reviewed", "teacher_comment"])
+        messages.success(request, f"Роботу {submission.student.get_full_name() or submission.student.username} оновлено.")
+        return redirect("assignment_submissions", pk=assignment.pk)
+    student_rows = [{"student": student, "submission": submissions.get(student.id)} for student in students]
+    return render(request, "learning/platform_admin/assignment_submissions.html", {"assignment": assignment, "student_rows": student_rows})
+
+
+@login_required
+@user_passes_test(is_platform_manager)
+def lesson_results(request, pk):
+    """A teacher-facing overview of every student's work in one lesson."""
+    lesson = get_object_or_404(
+        Lesson.objects.select_related("module", "module__course").prefetch_related("assignments", "quizzes"),
+        pk=pk,
+    )
+    students = list(User.objects.filter(
+        enrollments__course=lesson.module.course,
+        enrollments__is_active=True,
+    ).distinct().order_by("first_name", "last_name", "username"))
+    student_ids = [student.id for student in students]
+    assignments = list(lesson.assignments.all())
+    quizzes = list(lesson.quizzes.all())
+    progress_by_student = {
+        item.student_id: item
+        for item in LessonProgress.objects.filter(lesson=lesson, student_id__in=student_ids)
+    }
+    submitted_by_student = {}
+    for submission in Submission.objects.filter(assignment__in=assignments, student_id__in=student_ids):
+        submitted_by_student.setdefault(submission.student_id, []).append(submission)
+    latest_attempts = {}
+    for attempt in QuizAttempt.objects.filter(quiz__in=quizzes, student_id__in=student_ids).select_related("quiz").order_by("student_id", "quiz_id", "-completed_at"):
+        latest_attempts.setdefault((attempt.student_id, attempt.quiz_id), attempt)
+
+    rows = []
+    for student in students:
+        submitted = submitted_by_student.get(student.id, [])
+        attempts = [latest_attempts.get((student.id, quiz.id)) for quiz in quizzes]
+        rows.append({
+            "student": student,
+            "progress": progress_by_student.get(student.id),
+            "submitted_total": len(submitted),
+            "checked_total": sum(1 for item in submitted if item.is_reviewed),
+            "attempts": [{"quiz": quiz, "attempt": latest_attempts.get((student.id, quiz.id))} for quiz in quizzes],
+            "passed_quizzes": sum(1 for item in attempts if item and item.is_passed),
+        })
+    return render(request, "learning/platform_admin/lesson_results.html", {
+        "lesson": lesson, "rows": rows, "assignments_total": len(assignments), "quizzes_total": len(quizzes),
+    })
 
 
 @login_required

@@ -9,12 +9,42 @@
     <p>Керуйте курсами, доступами учнів, домашніми роботами, тестами та журналом відвідуваності.</p>
   </section>
 
-  <section class="admin-stats">
-    <a href="{% url 'platform_admin_courses' %}"><strong>{{ courses_count }}</strong><span>Курсів</span></a>
-    <a href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
-    <a href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
-    <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Оцінено</span></a>
-    <a href="{% url 'platform_admin_quizzes' %}"><strong>{{ quiz_attempts_count }}</strong><span>Тести</span></a>
-    <a href="{% url 'platform_admin_attendance' %}"><strong>✓</strong><span>Відвідуваність</span></a>
+  <section class="teacher-workspace">
+    <aside class="teacher-sidebar">
+      <span class="eyebrow light">Навігація</span>
+      <a class="is-current" href="{% url 'platform_admin_dashboard' %}">Огляд</a>
+      <a href="{% url 'platform_admin_courses' %}">Курси <b>{{ courses_count }}</b></a>
+      <a href="{% url 'platform_admin_students' %}">Учні <b>{{ students_count }}</b></a>
+      <a href="{% url 'platform_admin_submissions' %}">На перевірку <b>{{ pending_count }}</b></a>
+      <a href="{% url 'platform_admin_quizzes' %}">Тести <b>{{ quiz_attempts_count }}</b></a>
+      <a href="{% url 'platform_admin_attendance' %}">Відвідуваність</a>
+    </aside>
+
+    <div class="teacher-content">
+      <section class="admin-stats teacher-stats">
+        <a href="{% url 'platform_admin_courses' %}"><strong>{{ courses_count }}</strong><span>Курсів</span></a>
+        <a href="{% url 'platform_admin_students' %}"><strong>{{ students_count }}</strong><span>Учнів</span></a>
+        <a href="{% url 'platform_admin_submissions' %}"><strong>{{ pending_count }}</strong><span>На перевірку</span></a>
+        <a href="{% url 'platform_admin_submissions' %}?status=checked"><strong>{{ checked_count }}</strong><span>Перевірено</span></a>
+      </section>
+
+      <section class="admin-panel teacher-section">
+        <div class="section-title"><div><span class="eyebrow light">Навчання</span><h2>Усі курси</h2></div><a class="secondary-btn" href="{% url 'platform_admin_courses' %}">Керувати курсами</a></div>
+        <div class="teacher-course-list">
+          {% for course in courses %}
+            <a href="{{ course.get_absolute_url }}"><strong>{{ course.title }}</strong><span>{{ course.students_total }} учнів · {{ course.lessons_total }} уроків</span><b>Відкрити</b></a>
+          {% empty %}<p class="muted">Курсів поки немає.</p>{% endfor %}
+        </div>
+      </section>
+
+      <section class="admin-panel teacher-section">
+        <div class="section-title"><div><span class="eyebrow light">Домашні завдання</span><h2>Завдання та здачі</h2></div><a class="secondary-btn" href="{% url 'platform_admin_submissions' %}">Усі здачі</a></div>
+        <div class="teacher-task-list">
+          {% for assignment in assignments %}
+            <a href="{% url 'assignment_submissions' assignment.id %}"><span>{{ assignment.lesson.module.course.title }} · {{ assignment.lesson.title }}</span><strong>{{ assignment.title }}</strong><small>Здано: {{ assignment.submitted_total }} · Перевірено: {{ assignment.checked_total }}</small><b>Перевірити →</b></a>
+          {% empty %}<p class="muted">Домашніх завдань ще немає.</p>{% endfor %}
+        </div>
+      </section>
+    </div>
   </section>
 {% endblock %}
